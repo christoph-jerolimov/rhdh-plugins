@@ -22,7 +22,7 @@ metadata:
       type: source
 spec:
   type: backstage-plugin
-  lifecycle: active
+  lifecycle: production
   owner: rhdh-team
   system: rhdh
   subcomponentOf: rhdh-plugins

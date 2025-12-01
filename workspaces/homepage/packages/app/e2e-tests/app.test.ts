@@ -14,27 +14,14 @@
  * limitations under the License.
  */
 
-import { useScalprum } from '@scalprum/react-core';
+import { test, expect } from '@playwright/test';
 
-import { HomePageCardMountPoint } from '../types';
+test('App should render the welcome page', async ({ page }) => {
+  await page.goto('/');
 
-interface ScalprumState {
-  api?: {
-    dynamicRootConfig?: {
-      mountPoints?: {
-        'home.page/cards': HomePageCardMountPoint[];
-      };
-    };
-  };
-}
+  const enterButton = page.getByRole('button', { name: 'Enter' });
+  await expect(enterButton).toBeVisible();
+  await enterButton.click();
 
-export const useDynamicHomePageCards = ():
-  | HomePageCardMountPoint[]
-  | undefined => {
-  const scalprum = useScalprum<ScalprumState>();
-
-  const cards =
-    scalprum?.api?.dynamicRootConfig?.mountPoints?.['home.page/cards'];
-
-  return cards;
-};
+  await expect(page.getByText('Welcome back')).toBeVisible();
+});

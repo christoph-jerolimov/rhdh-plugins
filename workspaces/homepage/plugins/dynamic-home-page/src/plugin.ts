@@ -39,7 +39,6 @@ import { rootRouteRef } from './routes';
 import { QuickAccessApiClient, quickAccessApiRef } from './api';
 
 import type { DynamicHomePageProps } from './components/DynamicHomePage';
-import type { DynamicCustomizableHomePageProps } from './components/DynamicCustomizableHomePage';
 import type { SearchBarProps } from './components/SearchBar';
 import type { QuickAccessCardProps } from './components/QuickAccessCard';
 import type { HeadlineProps } from './components/Headline';
@@ -48,7 +47,6 @@ import type { MarkdownCardProps } from './components/MarkdownCard';
 import type { PlaceholderProps } from './components/Placeholder';
 
 export type { DynamicHomePageProps } from './components/DynamicHomePage';
-export type { DynamicCustomizableHomePageProps } from './components/DynamicCustomizableHomePage';
 export type { SearchBarProps } from './components/SearchBar';
 export type { QuickAccessCardProps } from './components/QuickAccessCard';
 export type { HeadlineProps } from './components/Headline';
@@ -113,18 +111,9 @@ export const DynamicHomePage: ComponentType<DynamicHomePageProps> =
 /**
  * Customizable Dynamic Home Page
  * @public
+ * @deprecated use `DynamicHomePage` instead
  */
-export const DynamicCustomizableHomePage: ComponentType<DynamicCustomizableHomePageProps> =
-  dynamicHomePagePlugin.provide(
-    createRoutableExtension({
-      name: 'DynamicCustomizableHomePage',
-      component: () =>
-        import('./components/DynamicCustomizableHomePage').then(
-          m => m.DynamicCustomizableHomePage,
-        ),
-      mountPoint: rootRouteRef,
-    }),
-  );
+export const DynamicCustomizableHomePage = DynamicHomePage;
 
 /**
  * @public
@@ -199,7 +188,7 @@ export const MarkdownCard: ComponentType<MarkdownCardProps> =
 export const Placeholder: ComponentType<PlaceholderProps> =
   dynamicHomePagePlugin.provide(
     createComponentExtension({
-      name: 'MarkdownCard',
+      name: 'Placeholder',
       component: {
         lazy: () => import('./components/Placeholder').then(m => m.Placeholder),
       },

@@ -19,7 +19,7 @@ metadata:
       type: source
 spec:
   type: backstage-frontend-plugin
-  lifecycle: active
+  lifecycle: production
   owner: rhdh-team
   system: rhdh
   subcomponentOf: red-hat-developer-hub-homepage

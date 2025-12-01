@@ -17,6 +17,7 @@
 import type { ComponentType } from 'react';
 
 import type { Tool } from '@backstage/plugin-home';
+import type { CardLayout, CardSettings } from '@backstage/plugin-home-react';
 
 /**
  * @public
@@ -43,17 +44,59 @@ export interface Layout {
 /**
  * @public
  */
-export interface HomePageCardMountPointConfig {
+export interface CardMountPointConfig {
   priority?: number;
   layouts?: Record<Breakpoint, Layout>;
 }
 
 /**
+ * Default homepage cards that appear by default and are used for "restore defaults" functionality.
+ *
  * @public
  */
-export interface HomePageCardMountPoint {
+export interface CardMountPoint {
   Component: ComponentType;
-  config?: HomePageCardMountPointConfig & {
+
+  // Untested
+  Actions?: ComponentType;
+  // Untested
+  Settings?: ComponentType;
+
+  config?: CardMountPointConfig & {
+    props?: Record<string, any>;
+  };
+  enabled?: boolean;
+}
+
+/**
+ * @public
+ */
+export interface WidgetMountPointConfig {
+  name: string;
+  title: string;
+  titleKey?: string;
+  description?: string;
+  descriptionKey?: string;
+
+  // TODO: rename to default layout?
+  cardLayout?: CardLayout;
+  settings?: CardSettings;
+}
+
+/**
+ * Additional widgets contributed by other plugins that appear in the 'add widget' dropdown.
+ *
+ * @public
+ */
+export interface WidgetMountPoint {
+  Component: ComponentType;
+
+  // Untested
+  Actions?: ComponentType;
+  // Untested
+  Settings?: ComponentType;
+
+  config?: WidgetMountPointConfig & {
     props?: Record<string, any>;
   };
   enabled?: boolean;

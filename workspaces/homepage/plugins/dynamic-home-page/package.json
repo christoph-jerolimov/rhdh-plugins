@@ -69,8 +69,10 @@
     "msw": "1.3.5",
     "react": "^16.13.1 || ^17.0.0 || ^18.0.0"
   },
+  "configSchema": "config.d.ts",
   "files": [
     "app-config.dynamic.yaml",
+    "config.d.ts",
     "dist"
   ]
 }
