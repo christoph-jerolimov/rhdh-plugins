@@ -17,6 +17,7 @@
 import { useScalprum } from '@scalprum/react-core';
 
 import { HomePageCardMountPoint } from '../types';
+import { useMemo } from 'react';
 
 interface ScalprumState {
   api?: {
@@ -28,13 +29,28 @@ interface ScalprumState {
   };
 }
 
-export const useDynamicHomePageCards = ():
-  | HomePageCardMountPoint[]
-  | undefined => {
+export const useCardMountPoints = (): HomePageCardMountPoint[] => {
   const scalprum = useScalprum<ScalprumState>();
 
   const cards =
     scalprum?.api?.dynamicRootConfig?.mountPoints?.['home.page/cards'];
 
-  return cards;
+  return useMemo(() => {
+    if (!cards || !Array.isArray(cards)) {
+      return [];
+    }
+
+    const filteredAndSorted = cards.filter(
+      card =>
+        // card.Component &&
+        card.enabled !== false &&
+        (!card.config?.priority || card.config.priority >= 0),
+    );
+
+    filteredAndSorted.sort(
+      (a, b) => (b.config?.priority ?? 0) - (a.config?.priority ?? 0),
+    );
+
+    return filteredAndSorted;
+  }, [cards]);
 };

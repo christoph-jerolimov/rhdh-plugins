@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import type { ComponentType } from 'react';
 import { Route } from 'react-router-dom';
 import { apiDocsPlugin, ApiExplorerPage } from '@backstage/plugin-api-docs';
 import {
@@ -54,18 +55,31 @@ import { CatalogGraphPage } from '@backstage/plugin-catalog-graph';
 import { RequirePermission } from '@backstage/plugin-permission-react';
 import { catalogEntityCreatePermission } from '@backstage/plugin-catalog-common/alpha';
 import { githubAuthApiRef } from '@backstage/core-plugin-api';
+
 import { ScalprumContext, ScalprumState } from '@scalprum/react-core';
 import { PluginStore } from '@openshift/dynamic-plugin-sdk';
+
 import {
-  DynamicCustomizableHomePage,
+  DynamicHomePage,
   VisitListener,
   OnboardingSection,
   QuickAccessCard,
   EntitySection,
   TemplateSection,
   defaultLayouts,
-  HomePageCardMountPoint,
   homepageTranslations,
+  SearchBar,
+  Headline,
+  Markdown,
+  MarkdownCard,
+  Placeholder,
+  CatalogStarredEntitiesCard,
+  RecentlyVisitedCard,
+  TopVisitedCard,
+  FeaturedDocsCard,
+  JokeCard,
+  WorldClock,
+  HomePageCardMountPoint,
 } from '@red-hat-developer-hub/backstage-plugin-dynamic-home-page';
 
 const identityProviders: IdentityProviders = [
@@ -109,7 +123,32 @@ const app = createApp({
   },
 });
 
-const mountPoints: HomePageCardMountPoint[] = [
+const cardMountPoints: HomePageCardMountPoint[] = [
+  {
+    Component: Headline,
+    config: {
+      props: {
+        title: 'asd',
+      },
+    },
+  },
+  {
+    Component: Headline,
+    config: {
+      props: {
+        title: 'asd 2',
+      },
+    },
+  },
+  {
+    Component: Headline,
+    config: {
+      name: 'Headline',
+      props: {
+        title: 'asd 3',
+      },
+    },
+  },
   {
     Component: OnboardingSection,
     config: {
@@ -129,24 +168,134 @@ const mountPoints: HomePageCardMountPoint[] = [
     },
   },
   {
+    Component: SearchBar,
+    config: {
+      name: 'SearchBar',
+      title: 'Search bar',
+      cardLayout: {
+        width: {
+          minColumns: 3,
+          maxColumns: 12,
+          defaultColumns: 12,
+        },
+        height: {
+          minRows: 1,
+          maxRows: 1,
+          defaultRows: 1,
+        },
+      },
+    },
+  },
+  {
+    Component: QuickAccessCard,
+    config: {
+      name: 'QuickAccessCard',
+      title: 'Quick Access Card',
+    },
+  },
+  {
+    Component: Headline,
+    config: {
+      name: 'Headline',
+      title: 'Headline',
+    },
+  },
+  {
+    Component: Markdown,
+    config: {
+      name: 'Markdown',
+      title: 'Markdown',
+    },
+  },
+  {
+    Component: MarkdownCard,
+    config: {
+      name: 'MarkdownCard',
+      title: 'Markdown card',
+    },
+  },
+  {
+    Component: Placeholder,
+    config: {
+      name: 'Placeholder',
+      title: 'Placeholder',
+    },
+  },
+  {
+    Component: CatalogStarredEntitiesCard,
+    config: {
+      name: 'CatalogStarredEntitiesCard',
+      title: 'Starred catalog entities',
+    },
+  },
+  {
+    Component: RecentlyVisitedCard as ComponentType,
+    config: {
+      name: 'RecentlyVisitedCard',
+      title: 'Recently visited',
+    },
+  },
+  {
+    Component: TopVisitedCard as ComponentType,
+    config: {
+      name: 'TopVisitedCard',
+      title: 'Top visited',
+    },
+  },
+  {
+    Component: FeaturedDocsCard as ComponentType,
+    config: {
+      name: 'FeaturedDocsCard',
+      title: 'Featured docs',
+    },
+  },
+  {
+    Component: JokeCard,
+    config: {
+      name: 'JokeCard',
+      title: 'Random joke',
+    },
+  },
+  {
+    Component: WorldClock as ComponentType,
+    config: {
+      name: 'WorldClock',
+      title: 'World clock',
+    },
+  },
+  // {
+  //   Component: OnboardingSection,
+  //   config: {
+  //     name: 'OnboardingSection',
+  //     title: 'Red Hat Developer Hub - Onboarding',
+  //   },
+  // },
+  {
+    Component: EntitySection,
+    config: {
+      name: 'EntitySection',
+      title: 'Red Hat Developer Hub - Software Catalog',
+    },
+  },
+  {
     Component: TemplateSection,
     config: {
-      layouts: defaultLayouts.template,
+      name: 'TemplateSection',
+      title: 'Red Hat Developer Hub - Explore templates',
     },
   },
 ];
 
 const scalprumState: ScalprumState = {
   initialized: true,
-  api: mountPoints
-    ? {
-        dynamicRootConfig: {
-          mountPoints: {
-            'home.page/cards': mountPoints,
-          },
-        },
-      }
-    : undefined,
+  api: {
+    dynamicRootConfig: {
+      mountPoints: {
+        // In RHDH, mount points will be loaded dynamically at runtime
+        'home.page/cards': cardMountPoints,
+      },
+    },
+  },
   config: {},
   pluginStore: new PluginStore(),
 };
@@ -157,7 +306,7 @@ const routes = (
       path="/"
       element={
         <ScalprumContext.Provider value={scalprumState}>
-          <DynamicCustomizableHomePage />
+          <DynamicHomePage />
         </ScalprumContext.Provider>
       }
     />

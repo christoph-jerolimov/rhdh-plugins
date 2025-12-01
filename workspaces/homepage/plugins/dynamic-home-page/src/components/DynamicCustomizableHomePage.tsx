@@ -16,8 +16,8 @@
 
 import type { ClockConfig } from '@backstage/plugin-home';
 
-import { useDynamicHomePageCards } from '../hooks/useDynamicHomePageCards';
-import { CustomizableHomePage } from './CustomizableHomePage';
+import { useCardMountPoints } from '../hooks/useCardMountPoints';
+import { HomePage } from './HomePage';
 import type { LocalClockProps } from './LocalClock';
 
 /**
@@ -40,7 +40,7 @@ export interface DynamicCustomizableHomePageProps {
 export const DynamicCustomizableHomePage = (
   props: DynamicCustomizableHomePageProps,
 ) => {
-  const cards = useDynamicHomePageCards();
+  const cardMountPoints = useCardMountPoints();
 
-  return <CustomizableHomePage {...props} cards={cards} />;
+  return <HomePage {...props} cardMountPoints={cardMountPoints} customizable />;
 };
