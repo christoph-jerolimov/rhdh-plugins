@@ -91,6 +91,16 @@ export const scorecardMessages = {
       'Some entities are not reporting values related to this metric.',
   },
 
+  // Table view
+  table: {
+    metricColumn: 'Metric',
+    valueColumn: 'Value',
+    statusColumn: 'Status',
+    descriptionColumn: 'Description',
+    noThreshold: 'N/A',
+    noMetrics: 'No metrics found',
+  },
+
   // Threshold translations
   thresholds: {
     success: 'Success',

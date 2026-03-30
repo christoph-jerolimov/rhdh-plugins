@@ -16,3 +16,6 @@
 import { EntityScorecardContent } from './EntityScorecardContent';
 
 export { EntityScorecardContent };
+export type { ProcessedMetric } from './EntityScorecardContent';
+export { ScorecardMetricsGrid } from './ScorecardMetricsGrid';
+export { ScorecardMetricsTable } from './ScorecardMetricsTable';

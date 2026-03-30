@@ -25,3 +25,4 @@ export {
 } from './constants';
 export { getStatusConfig } from './statusUtils';
 export { getLastUpdatedLabel } from './entityTableUtils';
+export type { StatusConfig } from './statusUtils';

@@ -14,22 +14,48 @@
  * limitations under the License.
  */
 
-import { MetricResult } from '@red-hat-developer-hub/backstage-plugin-scorecard-common';
+import { useState } from 'react';
+
+import {
+  MetricResult,
+  MetricValue,
+  ThresholdResult,
+} from '@red-hat-developer-hub/backstage-plugin-scorecard-common';
 import { ResponseErrorPanel } from '@backstage/core-components';
+import { Flex, ToggleButton, ToggleButtonGroup } from '@backstage/ui';
+import {
+  RiGridFill as GridIcon,
+  RiListUnordered as ListIcon,
+} from '@remixicon/react';
 
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 
 import NoScorecardsState from '../Common/NoScorecardsState';
-import Scorecard from './Scorecard';
+import { ScorecardMetricsGrid } from './ScorecardMetricsGrid';
+import { ScorecardMetricsTable } from './ScorecardMetricsTable';
 import { useScorecards } from '../../hooks/useScorecards';
-import { getStatusConfig } from '../../utils';
+import { getStatusConfig, StatusConfig } from '../../utils';
 import PermissionRequiredState from '../Common/PermissionRequiredState';
 import { useTranslation } from '../../hooks/useTranslation';
+
+export type ProcessedMetric = {
+  id: string;
+  title: string;
+  description: string;
+  value: MetricValue | null;
+  statusConfig: StatusConfig;
+  thresholds?: ThresholdResult;
+  isMetricDataError: boolean;
+  metricDataError?: string;
+  isThresholdError: boolean;
+  thresholdError?: string;
+};
 
 export const EntityScorecardContent = () => {
   const { scorecards, loadingData, error } = useScorecards();
   const { t } = useTranslation();
+  const [view, setView] = useState<'grid' | 'table'>('grid');
 
   if (loadingData) {
     return (
@@ -55,59 +81,69 @@ export const EntityScorecardContent = () => {
     return <NoScorecardsState />;
   }
 
+  const processedMetrics: ProcessedMetric[] =
+    scorecards?.map((metric: MetricResult) => {
+      const isMetricDataError =
+        metric.status === 'error' || metric.result?.value === null;
+
+      const isThresholdError =
+        metric.result?.thresholdResult?.status === 'error';
+
+      const statusConfig = getStatusConfig({
+        evaluation: metric.result?.thresholdResult?.evaluation,
+        thresholdStatus: metric.result?.thresholdResult?.status,
+        metricStatus: metric.status,
+        thresholdRules: metric.result.thresholdResult.definition?.rules,
+      });
+
+      const titleKey = `metric.${metric.id}.title`;
+      const descriptionKey = `metric.${metric.id}.description`;
+
+      const title = t(titleKey as any, {});
+      const description = t(descriptionKey as any, {});
+
+      const finalTitle = title === titleKey ? metric.metadata.title : title;
+      const finalDescription =
+        description === descriptionKey
+          ? metric.metadata.description
+          : description;
+
+      return {
+        id: metric.id,
+        title: finalTitle,
+        description: finalDescription,
+        value: metric.result?.value ?? null,
+        statusConfig,
+        thresholds: metric.result?.thresholdResult,
+        isMetricDataError,
+        metricDataError: metric?.error,
+        isThresholdError,
+        thresholdError: metric.result?.thresholdResult?.error,
+      };
+    }) ?? [];
+
   return (
-    <Box
-      display="flex"
-      flexWrap="wrap"
-      gap={2}
-      sx={{ alignItems: 'flex-start' }}
-    >
-      {scorecards?.map((metric: MetricResult) => {
-        // Check if metric data unavailable
-        const isMetricDataError =
-          metric.status === 'error' || metric.result?.value === null;
-
-        // Check if threshold has an error
-        const isThresholdError =
-          metric.result?.thresholdResult?.status === 'error';
-
-        const statusConfig = getStatusConfig({
-          evaluation: metric.result?.thresholdResult?.evaluation,
-          thresholdStatus: metric.result?.thresholdResult?.status,
-          metricStatus: metric.status,
-          thresholdRules: metric.result.thresholdResult.definition?.rules,
-        });
-
-        // Use metric ID to construct translation keys, fallback to original title/description
-        const titleKey = `metric.${metric.id}.title`;
-        const descriptionKey = `metric.${metric.id}.description`;
-
-        const title = t(titleKey as any, {});
-        const description = t(descriptionKey as any, {});
-
-        // If translation returns the key itself, fallback to original title/description
-        const finalTitle = title === titleKey ? metric.metadata.title : title;
-        const finalDescription =
-          description === descriptionKey
-            ? metric.metadata.description
-            : description;
-
-        return (
-          <Scorecard
-            key={metric.id}
-            cardTitle={finalTitle}
-            description={finalDescription}
-            statusColor={statusConfig.color}
-            StatusIcon={statusConfig.icon ?? (() => null)}
-            value={metric.result?.value}
-            thresholds={metric.result?.thresholdResult}
-            isMetricDataError={isMetricDataError}
-            metricDataError={metric?.error}
-            isThresholdError={isThresholdError}
-            thresholdError={metric.result?.thresholdResult?.error}
-          />
-        );
-      })}
-    </Box>
+    <Flex direction="column" gap="4">
+      <Flex justify="end">
+        <ToggleButtonGroup
+          selectedKeys={[view]}
+          onSelectionChange={keys =>
+            setView(keys.has('table') ? 'table' : 'grid')
+          }
+        >
+          <ToggleButton id="grid" iconStart={<GridIcon />}>
+            Grid
+          </ToggleButton>
+          <ToggleButton id="table" iconStart={<ListIcon />}>
+            Table
+          </ToggleButton>
+        </ToggleButtonGroup>
+      </Flex>
+      {view === 'grid' ? (
+        <ScorecardMetricsGrid metrics={processedMetrics} />
+      ) : (
+        <ScorecardMetricsTable metrics={processedMetrics} />
+      )}
+    </Flex>
   );
 };
