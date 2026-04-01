@@ -16,15 +16,15 @@
 
 import { createContext, useContext, useMemo } from 'react';
 
-import type { AppSidebarGroup } from './extensions/AppSidebarGroup';
-import type { AppSidebarItem } from './extensions/AppSidebarItem';
+import type { AppSidebarGroup } from '../extensions/AppSidebarGroup';
+import type { AppSidebarItem } from '../extensions/AppSidebarItem';
 
-interface SidebarItemsContextValue {
+interface AppSidebarContextValue {
   items: AppSidebarItem[];
   groups: AppSidebarGroup[];
 }
 
-const SidebarItemsContext = createContext<SidebarItemsContextValue>({
+const AppSidebarContext = createContext<AppSidebarContextValue>({
   items: [],
   groups: [],
 });
@@ -35,16 +35,16 @@ const SidebarItemsContext = createContext<SidebarItemsContextValue>({
  *
  * @internal
  */
-export const SidebarItemsProvider = ({
+export const AppSidebarProvider = ({
   items,
   groups,
   children,
-}: SidebarItemsContextValue & { children: React.ReactNode }) => {
+}: AppSidebarContextValue & { children: React.ReactNode }) => {
   const value = useMemo(() => ({ items, groups }), [items, groups]);
   return (
-    <SidebarItemsContext.Provider value={value}>
+    <AppSidebarContext.Provider value={value}>
       {children}
-    </SidebarItemsContext.Provider>
+    </AppSidebarContext.Provider>
   );
 };
 
@@ -53,6 +53,6 @@ export const SidebarItemsProvider = ({
  *
  * @internal
  */
-export const useSidebarItems = (): SidebarItemsContextValue => {
-  return useContext(SidebarItemsContext);
+export const useAppSidebarContext = (): AppSidebarContextValue => {
+  return useContext(AppSidebarContext);
 };

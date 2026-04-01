@@ -32,8 +32,8 @@ export interface AppSidebarGroup {
   title: string;
   /** Key for localizing the title. */
   titleKey?: string;
-  /** Icon component for the sidebar group. */
-  icon?: IconComponent;
+  /** Icon component or system icon name for the sidebar group. */
+  icon?: IconComponent | string;
   /** Child nav items collected from attached extensions. */
   children: AppSidebarItem[];
   /** Ordering priority when multiple groups are registered. Higher = first. */

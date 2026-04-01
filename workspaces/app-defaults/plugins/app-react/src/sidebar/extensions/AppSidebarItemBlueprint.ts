@@ -63,8 +63,11 @@ export const AppSidebarItemBlueprint = createExtensionBlueprint({
   },
   config: {
     schema: {
-      priority: z => z.number().optional(),
+      id: z => z.string().optional(),
+      title: z => z.string().optional(),
+      icon: z => z.string().optional(),
       href: z => z.string().optional(),
+      priority: z => z.number().optional(),
     },
   },
   *factory(
@@ -79,12 +82,13 @@ export const AppSidebarItemBlueprint = createExtensionBlueprint({
     },
     { config },
   ) {
+    console.log('xxx Creating sidebar item with params:', params, 'and config:', config)
     yield appSidebarItemDataRef({
-      id: params.id,
-      title: params.title,
+      id: config.id ?? params.id,
+      title: config.title ?? params.title,
       titleKey: params.titleKey,
       href: config.href ?? params.href,
-      icon: params.icon,
+      icon: config.icon ?? params.icon,
       element: params.element,
       priority: config.priority ?? params.priority,
     });

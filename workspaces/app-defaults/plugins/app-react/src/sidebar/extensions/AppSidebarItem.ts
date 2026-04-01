@@ -30,8 +30,8 @@ export interface AppSidebarItem {
   titleKey?: string;
   /** URL path for simple link items. */
   href?: string;
-  /** Icon component for the sidebar item. */
-  icon?: IconComponent;
+  /** Icon component or system icon name for the sidebar item. */
+  icon?: IconComponent | string;
   /** React element to render as sidebar item. */
   element?: React.ReactElement;
   /** Ordering priority when multiple items are registered. Higher = first. */

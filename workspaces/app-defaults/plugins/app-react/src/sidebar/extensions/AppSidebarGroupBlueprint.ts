@@ -65,6 +65,9 @@ export const AppSidebarGroupBlueprint = createExtensionBlueprint({
   },
   config: {
     schema: {
+      id: z => z.string().optional(),
+      title: z => z.string().optional(),
+      icon: z => z.string().optional(),
       priority: z => z.number().optional(),
     },
   },
@@ -80,10 +83,10 @@ export const AppSidebarGroupBlueprint = createExtensionBlueprint({
   ) {
     const children = inputs.children.map(c => c.get(appSidebarItemDataRef));
     yield appSidebarGroupDataRef({
-      id: params.id,
-      title: params.title,
+      id: config.id ?? params.id,
+      title: config.title ?? params.title,
       titleKey: params.titleKey,
-      icon: params.icon,
+      icon: config.icon ?? params.icon,
       children,
       priority: config.priority ?? params.priority,
     });

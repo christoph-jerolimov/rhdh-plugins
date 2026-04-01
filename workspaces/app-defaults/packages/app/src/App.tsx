@@ -22,10 +22,19 @@ import {
   appSidebarModule,
 } from '@red-hat-developer-hub/backstage-plugin-app-react/alpha';
 
+import { rhdhThemeModule } from '@red-hat-developer-hub/backstage-plugin-theme/alpha';
+
 import { drawerDemoModule } from './modules/drawer-demo';
 
 import { sidebarDemoModule } from './modules/sidebar-demo';
 
 export default createApp({
-  features: [catalogPlugin, appDrawerModule, appSidebarModule, drawerDemoModule, sidebarDemoModule],
+  features: [
+    catalogPlugin,
+    appDrawerModule,
+    appSidebarModule,
+    rhdhThemeModule,
+    drawerDemoModule,
+    sidebarDemoModule,
+  ],
 });

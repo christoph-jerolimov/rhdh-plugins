@@ -18,10 +18,13 @@ import {
   createExtensionInput,
   createFrontendModule,
 } from '@backstage/frontend-plugin-api';
-import { AppRootWrapperBlueprint } from '@backstage/plugin-app-react';
+import { AppRootWrapperBlueprint, NavContentBlueprint } from '@backstage/plugin-app-react';
 
-import { SidebarContent } from './Sidebar';
-import { SidebarItemsProvider } from './SidebarItemsContext';
+import { AppSidebar } from './components/AppSidebar';
+import { AppSidebarProvider } from './components/AppSidebarContext';
+
+import { allDefaultSidebarItems } from './detaults';
+
 import { appSidebarGroupDataRef } from './extensions/appSidebarGroupDataRef';
 import { appSidebarItemDataRef } from './extensions/appSidebarItemDataRef';
 
@@ -43,17 +46,31 @@ const appSidebarExtension = AppRootWrapperBlueprint.makeWithOverrides({
   factory(originalFactory, { inputs }) {
     const items = inputs.sidebarItems.map(i => i.get(appSidebarItemDataRef));
     const groups = inputs.sidebarGroups.map(g => g.get(appSidebarGroupDataRef));
+
+    console.log('xxx Sidebar items:', items);
+    console.log('xxx Sidebar groups:', groups);
+
     return originalFactory({
       component: ({ children }) => (
-        <SidebarItemsProvider items={items} groups={groups}>
+        <AppSidebarProvider items={items} groups={groups}>
           {children}
-        </SidebarItemsProvider>
+        </AppSidebarProvider>
       ),
     });
   },
 });
 
+export const appSidebarContent = NavContentBlueprint.make({
+  params: {
+    component: AppSidebar,
+  },
+});
+
 export const appSidebarModule = createFrontendModule({
   pluginId: 'app',
-  extensions: [appSidebarExtension, SidebarContent],
+  extensions: [
+    appSidebarExtension,
+    appSidebarContent,
+    ...allDefaultSidebarItems,
+  ],
 });

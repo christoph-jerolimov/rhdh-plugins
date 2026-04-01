@@ -64,7 +64,7 @@ const docsItem = AppSidebarItemBlueprint.make({
   name: 'demo-docs',
   params: {
     id: 'demo-docs',
-    title: 'Docs',
+    title: 'Demo Docs',
     href: '/docs',
     icon: LibraryBooksIcon,
   },
@@ -76,7 +76,7 @@ const helpItem = AppSidebarItemBlueprint.make({
   name: 'demo-help',
   params: {
     id: 'demo-help',
-    title: 'Help',
+    title: 'Demo Help',
     icon: HelpIcon,
     href: '/help',
   },
@@ -84,5 +84,11 @@ const helpItem = AppSidebarItemBlueprint.make({
 
 export const sidebarDemoModule = createFrontendModule({
   pluginId: 'app',
-  extensions: [platformGroup, clustersItem, databasesItem, docsItem, helpItem],
+  extensions: [
+    platformGroup,
+    clustersItem,
+    databasesItem,
+    docsItem,
+    helpItem,
+  ],
 });

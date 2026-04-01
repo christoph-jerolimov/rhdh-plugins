@@ -16,6 +16,43 @@ app:
         config:
           path: /
 
+    # - app-sidebar-group:example/platform2:
+    #     attachTo:
+    #       id: app-root-wrapper:app/sidebar
+    #       input: sidebarGroups
+    #     config:
+    #       id: platform
+    #       title: Platform2
+    #       icon: CategoryIcon
+
+    # - app-sidebar-item:example/clusters:
+    #     attachTo:
+    #       id: app-sidebar-group/platform2
+    #       input: children
+    #     config:
+    #       id: clusters
+    #       title: Clusters
+    #       href: /clusters
+    #       icon: CloudIcon
+
+    # - app-sidebar-item:example/pipelines:
+    #     attachTo:
+    #       id: app-sidebar-group/platform2
+    #       input: children
+    #     config:
+    #       id: pipelines
+    #       title: Pipelines
+    #       href: /pipelines
+    #       icon: BuildIcon
+
+    - app-sidebar-item:app/random:
+        config:
+          id: random
+          title: Random
+          href: /random
+          # icon: BuildIcon
+
+
 organization:
   name: My Company
 
