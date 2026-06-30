@@ -164,42 +164,26 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.RHDH_BOT_TOKEN}}
 
   build-next-image:
-    name: Build "next" image for ${{ inputs.workspace }} on branch ${{ inputs.branch }}
-    runs-on: ubuntu-latest
+    name: Build "next" image for ${{ inputs.workspace }}
     # Build the rolling "next" image for every merge into main, independent of
     # whether the changesets resulted in a release.
     if: inputs.branch == 'main'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-        with:
-          ref: ${{ inputs.branch }}
-
-      - name: Build and push plugin image
-        uses: ./.github/actions/build-plugin-image
-        with:
-          workspace: ${{ inputs.workspace }}
-          tags: ${{ inputs.workspace }}-next
-          push: 'true'
-          quay_username: ${{ secrets.QUAY_USERNAME }}
-          quay_password: ${{ secrets.QUAY_PASSWORD }}
+    uses: ./.github/workflows/build-container-image.yml
+    with:
+      workspace: ${{ inputs.workspace }}
+      ref: ${{ inputs.branch }}
+      tags: ${{ inputs.workspace }}-next
+      push: true
+    secrets: inherit
 
   build-latest-image:
-    name: Build "latest" image for ${{ inputs.workspace }} on branch ${{ inputs.branch }}
-    runs-on: ubuntu-latest
+    name: Build "latest" image for ${{ inputs.workspace }}
     # Only build the "latest" image once a release of the workspace happened.
     needs: release
-    steps:
-      - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-        with:
-          ref: ${{ inputs.branch }}
-
-      - name: Build and push plugin image
-        uses: ./.github/actions/build-plugin-image
-        with:
-          workspace: ${{ inputs.workspace }}
-          tags: ${{ inputs.workspace }}-latest
-          push: 'true'
-          quay_username: ${{ secrets.QUAY_USERNAME }}
-          quay_password: ${{ secrets.QUAY_PASSWORD }}
+    uses: ./.github/workflows/build-container-image.yml
+    with:
+      workspace: ${{ inputs.workspace }}
+      ref: ${{ inputs.branch }}
+      tags: ${{ inputs.workspace }}-latest
+      push: true
+    secrets: inherit
