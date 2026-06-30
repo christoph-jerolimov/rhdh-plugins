@@ -162,3 +162,44 @@ jobs:
         env:
           WORKSPACE_NAME: ${{ inputs.workspace }}
           GITHUB_TOKEN: ${{ secrets.RHDH_BOT_TOKEN}}
+
+  build-next-image:
+    name: Build "next" image for ${{ inputs.workspace }} on branch ${{ inputs.branch }}
+    runs-on: ubuntu-latest
+    # Build the rolling "next" image for every merge into main, independent of
+    # whether the changesets resulted in a release.
+    if: inputs.branch == 'main'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: Build and push plugin image
+        uses: ./.github/actions/build-plugin-image
+        with:
+          workspace: ${{ inputs.workspace }}
+          tags: ${{ inputs.workspace }}-next
+          push: 'true'
+          quay_username: ${{ secrets.QUAY_USERNAME }}
+          quay_password: ${{ secrets.QUAY_PASSWORD }}
+
+  build-latest-image:
+    name: Build "latest" image for ${{ inputs.workspace }} on branch ${{ inputs.branch }}
+    runs-on: ubuntu-latest
+    # Only build the "latest" image once a release of the workspace happened.
+    needs: release
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: Build and push plugin image
+        uses: ./.github/actions/build-plugin-image
+        with:
+          workspace: ${{ inputs.workspace }}
+          tags: ${{ inputs.workspace }}-latest
+          push: 'true'
+          quay_username: ${{ secrets.QUAY_USERNAME }}
+          quay_password: ${{ secrets.QUAY_PASSWORD }}
