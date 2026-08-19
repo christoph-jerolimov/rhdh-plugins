@@ -106,10 +106,11 @@ describe('KagentiAgentEntityProvider', () => {
     expect(mutation.entities).toHaveLength(1);
 
     const entity = mutation.entities[0].entity;
-    expect(entity.kind).toBe('Component');
-    expect(entity.spec.type).toBe('ai-agent');
+    expect(entity.kind).toBe('AiResource');
+    expect(entity.spec.type).toBe('agent');
     expect(entity.spec.lifecycle).toBe('production');
     expect(entity.spec.owner).toBe('user:default/admin');
+    expect(entity.spec.instructions).toBe('A test agent');
     expect(entity.metadata.title).toBe('Test Agent');
     expect(
       entity.metadata.annotations['boost.redhat.com/lifecycle-stage'],
@@ -212,6 +213,113 @@ describe('KagentiAgentEntityProvider', () => {
     const mutation = (mockConnection.applyMutation as jest.Mock).mock
       .calls[0][0];
     expect(mutation.entities).toHaveLength(0);
+  });
+
+  it('should use correct API URL pattern /api/v1/agents', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => [],
+    } as Response);
+
+    const provider = new KagentiAgentEntityProvider({
+      config: defaultConfig,
+      logger: mockServices.logger.mock(),
+      taskRunner,
+    });
+
+    await provider.connect(mockConnection);
+    await taskRunner.runAll();
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      'http://localhost:8080/api/v1/agents?namespace=default',
+      expect.objectContaining({ headers: expect.any(Object) }),
+    );
+  });
+
+  it('should handle { items: AgentCard[] } response shape', async () => {
+    const agents: AgentCard[] = [
+      {
+        id: 'agent-1',
+        name: 'Test Agent',
+        url: 'http://example.com',
+        namespace: 'default',
+      },
+    ];
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ items: agents }),
+    } as Response);
+
+    const provider = new KagentiAgentEntityProvider({
+      config: defaultConfig,
+      logger: mockServices.logger.mock(),
+      taskRunner,
+    });
+
+    await provider.connect(mockConnection);
+    await taskRunner.runAll();
+
+    const mutation = (mockConnection.applyMutation as jest.Mock).mock
+      .calls[0][0];
+    expect(mutation.entities).toHaveLength(1);
+    expect(mutation.entities[0].entity.metadata.title).toBe('Test Agent');
+  });
+
+  it('should include bearer token header when authClient is provided', async () => {
+    const mockAuthClient = {
+      getBearerToken: jest.fn().mockResolvedValue('test-token-123'),
+    };
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => [],
+    } as Response);
+
+    const provider = new KagentiAgentEntityProvider({
+      config: defaultConfig,
+      logger: mockServices.logger.mock(),
+      taskRunner,
+      authClient: mockAuthClient as any,
+    });
+
+    await provider.connect(mockConnection);
+    await taskRunner.runAll();
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: 'Bearer test-token-123',
+        }),
+      }),
+    );
+  });
+
+  it('should serve cached entities on auth failure', async () => {
+    const mockAuthClient = {
+      getBearerToken: jest
+        .fn()
+        .mockRejectedValue(new Error('Keycloak unavailable')),
+    };
+
+    const provider = new KagentiAgentEntityProvider({
+      config: defaultConfig,
+      logger: mockServices.logger.mock(),
+      taskRunner,
+      authClient: mockAuthClient as any,
+    });
+
+    await provider.connect(mockConnection);
+    await taskRunner.runAll();
+
+    // Auth failure propagates to refresh() catch — no fetch attempted,
+    // applyMutation called with empty cached entities
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(mockConnection.applyMutation).toHaveBeenCalledWith({
+      type: 'full',
+      entities: [],
+    });
   });
 
   it('should scan multiple namespaces', async () => {

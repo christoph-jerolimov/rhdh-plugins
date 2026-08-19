@@ -1,5 +1,149 @@
 # @red-hat-developer-hub/backstage-plugin-orchestrator
 
+## 6.0.0
+
+### Major Changes
+
+- 2e4c46e: **BREAKING**: Graduated the New Frontend System (NFS) orchestrator plugins to stable API.
+
+  The NFS plugins (`createFrontendPlugin`) have been promoted from the `./alpha` subpath to the primary `.` entry point. Legacy (OFS) exports have been moved to the new `./legacy` subpath.
+
+  For `@red-hat-developer-hub/backstage-plugin-orchestrator`, the `./alpha` subpath now only exports translations. For `@red-hat-developer-hub/backstage-plugin-orchestrator-form-widgets`, the `./alpha` subpath has been removed.
+
+  **Migration for NFS consumers (previously using `./alpha`):**
+
+  ```diff
+  - import orchestratorPlugin, { orchestratorTranslationsModule } from '@red-hat-developer-hub/backstage-plugin-orchestrator/alpha';
+  - import orchestratorFormWidgetsPlugin from '@red-hat-developer-hub/backstage-plugin-orchestrator-form-widgets/alpha';
+  + import orchestratorPlugin, { orchestratorTranslationsModule } from '@red-hat-developer-hub/backstage-plugin-orchestrator';
+  + import orchestratorFormWidgetsPlugin from '@red-hat-developer-hub/backstage-plugin-orchestrator-form-widgets';
+  ```
+
+  **Migration for OFS consumers:**
+
+  ```diff
+  - import { OrchestratorPage, OrchestratorIcon } from '@red-hat-developer-hub/backstage-plugin-orchestrator';
+  - import { orchestratorFormWidgetsPlugin } from '@red-hat-developer-hub/backstage-plugin-orchestrator-form-widgets';
+  + import { OrchestratorPage, OrchestratorIcon } from '@red-hat-developer-hub/backstage-plugin-orchestrator/legacy';
+  + import { orchestratorFormWidgetsPlugin } from '@red-hat-developer-hub/backstage-plugin-orchestrator-form-widgets/legacy';
+  ```
+
+  **Migration for dynamic plugin configurations:**
+
+  Legacy exports require `module: Legacy` — they are not available on the default module.
+  OFS deployments must also load form-widgets via `pluginModule: Legacy` so RHDH registers the OFS `BackstagePlugin` (PluginRoot is now NFS).
+
+  ```yaml
+  dynamicPlugins:
+    frontend:
+      red-hat-developer-hub.backstage-plugin-orchestrator:
+        # Legacy exports require `module: Legacy`
+        dynamicRoutes:
+          - path: /orchestrator
+            importName: OrchestratorPage
+            module: Legacy
+      red-hat-developer-hub.backstage-plugin-orchestrator-form-widgets:
+        pluginModule: Legacy
+  ```
+
+### Patch Changes
+
+- e0093e0: Remove unused `@janus-idp/backstage-plugin-audit-log-node` and `@janus-idp/cli` dependencies.
+- Updated dependencies [a64f76d]
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-form-api@2.10.0
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-form-react@2.11.0
+
+## 5.11.0
+
+### Minor Changes
+
+- f48dfb4: Add conditional RBAC policy support for orchestrator workflows using the `IS_ALLOWED_WORKFLOW_ID` rule. Dynamic workflow-specific permissions (`orchestrator.workflow.<workflowId>` and `orchestrator.workflow.use.<workflowId>`) are deprecated and will be removed in the next release.
+
+  Migrate from deprecated dynamic permissions to conditional policies. See `docs/MIGRATION-CONDITIONAL-POLICIES.md`.
+
+### Patch Changes
+
+- e5788bb: Reduce NFS Module Federation sync size by lazy-loading heavy dependencies.
+- e0d0986: Updated dependency `prettier` to `3.9.6`.
+- 8966faf: Updated dependency `prettier` to `3.9.5`.
+- e3fb07a: Export translations module as default for NFS auto-discovery
+- Updated dependencies [f48dfb4]
+- Updated dependencies [c74276c]
+- Updated dependencies [e0d0986]
+- Updated dependencies [8966faf]
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-common@3.9.0
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-form-api@2.9.1
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-form-react@2.10.1
+
+## 5.10.0
+
+### Minor Changes
+
+- 10f9b87: Backstage version bump to v1.52.0
+
+### Patch Changes
+
+- 5e0934d: Extract colocated helper modules for unit-test coverage of pure UI logic.
+- 83d8a47: Removed unused `StylesProvider` and `createGenerateClassName` JSS wrapper from plugin Router. Dropped `@mui/styles` dependency since JSS class-name isolation is no longer needed after the MUI5 migration.
+- Updated dependencies [5e0934d]
+- Updated dependencies [10f9b87]
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-form-react@2.10.0
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-common@3.8.0
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-form-api@2.9.0
+
+## 5.9.4
+
+### Patch Changes
+
+- f3e7e45: Fix accessibility violations (aria-progressbar-name, aria-prohibited-attr) in WorkflowSuccessRatioCell component.
+
+## 5.9.3
+
+### Patch Changes
+
+- 6d0a82b: Bump `@red-hat-developer-hub/backstage-plugin-theme` to `^0.14.11` to fix broken `config.d.ts` in earlier versions.
+
+## 5.9.2
+
+### Patch Changes
+
+- c0f62ab: Fix hardcoded English "at" in workflow status time translations - now each language uses its own grammatically correct preposition
+- 2d00ba5: Replace workflow execution progress list with a React Flow graph visualization.
+- Updated dependencies [eade824]
+- Updated dependencies [ea8563b]
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-common@3.7.3
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-form-react@2.9.3
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-form-api@2.8.3
+
+## 5.9.1
+
+### Patch Changes
+
+- cb02f14: Fix intermittent page load failures in dynamic plugin mode by removing the explicit Alpha module from translationResources, letting RHDH default to PluginRoot and avoiding a module initialization race on the Alpha default export.
+- 00f80fc: Fix workflow instance page layout overlap when `cardHeightMode` is set to `content`.
+- 41fe374: Fix unintended Workflows tab on User profile pages by converting the entity tab condition from a React hook-based component to a plain predicate function and using the built-in hasAnnotation checker in dynamic plugin config
+- 992efa0: Fix incorrect aria-label on Run again and Abort buttons when the user is authorized to execute the workflow.
+
+## 5.9.0
+
+### Minor Changes
+
+- 2fd75ad: Improve Orchestrator UI for workflows, runs, and workflow details, and place the sidebar item under Administration.
+
+### Patch Changes
+
+- 1dde4e4: Remove the retrigger dropdown menu for aborted workflow runs.
+- 1e4f9ed: Fix the workflows list when RBAC restricts read access to specific workflows.
+- 06755cb: Use instance `totalCount` from the API for the All runs tab title and pagination instead of the current page size.
+- e2df0a3: Show unavailable workflow error details in tooltips and disable run actions when a workflow is not available.
+- de71949: Add frontend unit test coverage for orchestrator hooks and status components, and harden the status indicator fallback for unknown states.
+- Updated dependencies [19f7643]
+- Updated dependencies [b2307f3]
+- Updated dependencies [e1a86f0]
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-form-react@2.9.2
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-common@3.7.2
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-form-api@2.8.2
+
 ## 5.8.1
 
 ### Patch Changes

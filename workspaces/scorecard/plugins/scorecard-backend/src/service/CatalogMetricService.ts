@@ -22,11 +22,18 @@ import {
   ScorecardEntityHealthSummary,
   aggregationTypes,
   AggregatedMetric,
+  MetricTimeSeriesResponse,
+  MetricTimeSeriesPoint,
 } from '@red-hat-developer-hub/backstage-plugin-scorecard-common';
 import type { Entity } from '@backstage/catalog-model';
 import { normalizeOwnerRef } from '../utils/normalizeOwnerRef';
+import { formatUtcDate } from '../utils/formatUtcDate';
 import { MetricProvidersRegistry } from '../providers/MetricProvidersRegistry';
-import { NotFoundError, stringifyError } from '@backstage/errors';
+import {
+  NotAllowedError,
+  NotFoundError,
+  stringifyError,
+} from '@backstage/errors';
 import {
   AuthService,
   BackstageCredentials,
@@ -124,24 +131,23 @@ export class CatalogMetricService {
     );
 
     return rawResults.map(
-      ({ metric_id, value, error_message, timestamp, status }) => {
+      ({ metricId, value, errorMessage, timestamp, status }) => {
         let thresholds: ThresholdConfig | undefined;
         let thresholdError: string | undefined;
 
-        const provider = this.registry.getProvider(metric_id);
-        const metric = this.registry.getMetric(metric_id);
+        const metric = this.registry.getMetric(metricId);
 
         try {
           thresholds = this.thresholdResolver.resolveEntityThresholds(
             entity,
-            provider,
+            metric,
           );
 
           if (value === null) {
             thresholdError =
               'Unable to evaluate thresholds, metric value is missing';
-          } else if (error_message) {
-            thresholdError = error_message;
+          } else if (errorMessage) {
+            thresholdError = errorMessage;
           }
         } catch (error) {
           thresholdError = stringifyError(error);
@@ -149,7 +155,7 @@ export class CatalogMetricService {
 
         const isMetricCalcError = isMetricCalculationError({
           value,
-          error_message,
+          errorMessage,
         });
 
         return {
@@ -159,11 +165,13 @@ export class CatalogMetricService {
             title: metric.title,
             description: metric.description,
             type: metric.type,
+            unit: metric.unit,
             history: metric.history,
+            defaultVisualization: metric.defaultVisualization,
           },
           ...(isMetricCalcError && {
             error:
-              error_message ??
+              errorMessage ??
               stringifyError(new Error(`Metric value is 'undefined'`)),
           }),
           result: {
@@ -179,6 +187,84 @@ export class CatalogMetricService {
         };
       },
     );
+  }
+
+  /**
+   * Get a daily time series for one metric on one catalog entity.
+   *
+   * Buckets samples by UTC calendar day and keeps the latest row (`MAX(id)`) per day.
+   * Calculation failures and null values are excluded from `points`.
+   *
+   * @param entityRef - Entity reference in format "kind:namespace/name"
+   * @param metricId - Metric ID to fetch
+   * @param from - Inclusive range start
+   * @param to - Inclusive range end
+   * @param filter - Permission filter
+   */
+  async getEntityMetricTimeSeries(
+    entityRef: string,
+    metricId: string,
+    from: Date,
+    to: Date,
+    filter?: PermissionCriteria<
+      PermissionCondition<string, PermissionRuleParams>
+    >,
+  ): Promise<MetricTimeSeriesResponse> {
+    const entity = await this.catalog.getEntityByRef(entityRef, {
+      credentials: await this.auth.getOwnServiceCredentials(),
+    });
+    if (!entity) {
+      throw new NotFoundError(`Entity not found: ${entityRef}`);
+    }
+
+    const metric = this.registry.getMetric(metricId);
+    const authorizedMetrics = filterAuthorizedMetrics([metric], filter);
+    if (authorizedMetrics.length === 0) {
+      throw new NotAllowedError(
+        `To view the scorecard metrics, your administrator must grant you the required permission.`,
+      );
+    }
+
+    const rows = await this.database.readEntityMetricValuesInRange(
+      entityRef,
+      metricId,
+      from,
+      to,
+    );
+
+    const latestByUtcDay = new Map<string, DbMetricValue>();
+    for (const row of rows) {
+      if (row.value === null || isMetricCalculationError(row)) {
+        continue;
+      }
+      const dayKey = formatUtcDate(row.timestamp);
+      const existing = latestByUtcDay.get(dayKey);
+      // Postgres may return bigIncrements as strings; compare numerically.
+      if (!existing || Number(row.id) > Number(existing.id)) {
+        latestByUtcDay.set(dayKey, row);
+      }
+    }
+
+    const points: MetricTimeSeriesPoint[] = Array.from(latestByUtcDay.values())
+      .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())
+      .map(row => ({
+        value: row.value as NonNullable<typeof row.value>,
+        timestamp: row.timestamp.toISOString(),
+      }));
+
+    return {
+      metricId: metric.id,
+      entityRef,
+      points,
+      metadata: {
+        title: metric.title,
+        description: metric.description,
+        type: metric.type,
+        unit: metric.unit,
+        history: metric.history,
+        defaultVisualization: metric.defaultVisualization,
+      },
+    };
   }
 
   /**
@@ -232,7 +318,7 @@ export class CatalogMetricService {
    * database-level sorting, and in-memory pagination over the permission-filtered result set.
    * Returns empty entities if the catalog is unavailable (fail-secure).
    *
-   * @param metricId - Metric ID to fetch (e.g., "github.open_prs")
+   * @param metricId - Metric ID to fetch (e.g., "github.openPRs")
    * @param options - Query options for filtering, sorting, and pagination
    * @param options.status - Filter by threshold status (database-level)
    * @param options.owner - Filter by owner entity reference (database-level)
@@ -281,6 +367,7 @@ export class CatalogMetricService {
           title: metric.title,
           description: metric.description,
           type: metric.type,
+          unit: metric.unit,
         },
         entities: [],
         pagination: {
@@ -323,7 +410,7 @@ export class CatalogMetricService {
         const batch = rows.slice(i, i + CatalogMetricService.BATCH_SIZE);
         const response = await this.catalog.getEntitiesByRefs(
           {
-            entityRefs: batch.map(row => row.catalog_entity_ref),
+            entityRefs: batch.map(row => row.catalogEntityRef),
             fields: [
               'kind',
               'metadata.name',
@@ -338,7 +425,7 @@ export class CatalogMetricService {
         for (let j = 0; j < batch.length; j++) {
           const entity = response.items[j];
           if (!entity) continue; // null = unauthorized or not found, skip
-          entityMap.set(batch[j].catalog_entity_ref, entity);
+          entityMap.set(batch[j].catalogEntityRef, entity);
           accessibleRows.push(batch[j]);
         }
       }
@@ -352,6 +439,7 @@ export class CatalogMetricService {
           title: metric.title,
           description: metric.description,
           type: metric.type,
+          unit: metric.unit,
         },
         entities: [],
         pagination: {
@@ -384,6 +472,7 @@ export class CatalogMetricService {
           title: metric.title,
           description: metric.description,
           type: metric.type,
+          unit: metric.unit,
         },
         entities: [],
         pagination: {
@@ -403,10 +492,10 @@ export class CatalogMetricService {
     // Enrich page rows from the cached entity map
     const enrichedEntities: EntityMetricDetail[] = [];
     for (const row of pageRows) {
-      const entity = entityMap.get(row.catalog_entity_ref);
+      const entity = entityMap.get(row.catalogEntityRef);
       if (!entity) continue;
       enrichedEntities.push({
-        entityRef: row.catalog_entity_ref,
+        entityRef: row.catalogEntityRef,
         entityNamespace: entity.metadata.namespace,
         entityName: entity.metadata.name,
         entityKind: entity.kind,
@@ -424,6 +513,7 @@ export class CatalogMetricService {
         title: metric.title,
         description: metric.description,
         type: metric.type,
+        unit: metric.unit,
       },
       entities: enrichedEntities,
       pagination: {

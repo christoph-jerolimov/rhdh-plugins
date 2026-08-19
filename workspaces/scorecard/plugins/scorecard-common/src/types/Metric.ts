@@ -14,12 +14,20 @@
  * limitations under the License.
  */
 
-import { ThresholdResult } from './threshold';
+import { ThresholdConfig, ThresholdResult } from './threshold';
 
 /**
  * @public
  */
 export type MetricType = 'number' | 'boolean';
+
+/**
+ * Default visualization for a metric on the entity scorecard.
+ * Omit / undefined means `'value'`.
+ *
+ * @public
+ */
+export type MetricDefaultVisualization = 'value' | 'sparkline';
 
 /**
  * @public
@@ -38,7 +46,10 @@ export type Metric<T extends MetricType = MetricType> = {
   title: string;
   description: string;
   type: T;
+  thresholds: ThresholdConfig;
+  unit?: string;
   history?: boolean;
+  defaultVisualization?: MetricDefaultVisualization;
 };
 
 /**
@@ -51,7 +62,9 @@ export type MetricResult = {
     title: string;
     description: string;
     type: MetricType;
+    unit?: string;
     history?: boolean;
+    defaultVisualization?: MetricDefaultVisualization;
   };
   result: {
     value: MetricValue | null;
@@ -100,6 +113,7 @@ export type EntityMetricDetailResponse = {
     title: string;
     description: string;
     type: MetricType;
+    unit?: string;
   };
   entities: EntityMetricDetail[];
   pagination: {
@@ -110,4 +124,32 @@ export type EntityMetricDetailResponse = {
     isCapped: boolean;
   };
   entityHealth: ScorecardEntityHealthSummary;
+};
+
+/**
+ * A single sample in a metric time series (latest successful value for a UTC day).
+ * @public
+ */
+export type MetricTimeSeriesPoint = {
+  value: MetricValue;
+  /** ISO-8601 timestamp of the chosen sample */
+  timestamp: string;
+};
+
+/**
+ * Daily time-series response for one metric on one catalog entity.
+ * @public
+ */
+export type MetricTimeSeriesResponse = {
+  metricId: string;
+  entityRef: string;
+  points: MetricTimeSeriesPoint[];
+  metadata: {
+    title: string;
+    description: string;
+    type: MetricType;
+    unit?: string;
+    history?: boolean;
+    defaultVisualization?: MetricDefaultVisualization;
+  };
 };

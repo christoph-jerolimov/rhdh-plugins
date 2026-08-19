@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { ConfigReader, Config } from '@backstage/config';
+import { Config } from '@backstage/config';
 import {
   mockErrorHandler,
   mockServices,
@@ -34,8 +34,10 @@ import {
   AggregatedMetric,
   AggregatedMetricResult,
   aggregationTypes,
+  DEFAULT_NUMBER_THRESHOLDS,
   Metric,
   MetricResult,
+  MetricTimeSeriesResponse,
 } from '@red-hat-developer-hub/backstage-plugin-scorecard-common';
 import { CatalogMetricService } from './CatalogMetricService';
 import { NotFoundError } from '@backstage/errors';
@@ -49,9 +51,10 @@ import {
   PermissionsService,
 } from '@backstage/backend-plugin-api';
 import { mockDatabaseMetricValues } from '../../__fixtures__/mockDatabaseMetricValues';
-import { AggregationsService } from './aggregations/AggregationService';
+import { AggregationsService } from './aggregations/AggregationsService';
 import { DatabaseMetricValues } from '../database/DatabaseMetricValues';
 import { DbAggregatedMetric } from '../database/types';
+import { mockStatusGroupedAggregationResult } from '../../__fixtures__/mockAggregatedMetricResult';
 
 jest.mock('../utils/getEntitiesOwnedByUser', () => ({
   getEntitiesOwnedByUser: jest.fn(),
@@ -92,7 +95,7 @@ const CONDITIONAL_POLICY_DECISION: PolicyDecision = {
         rule: 'HAS_METRIC_ID',
         resourceType: 'scorecard-metric',
         params: {
-          metricIds: ['github.open_prs', 'github.open_issues'],
+          metricIds: ['github.openPRs', 'github.openIssues'],
         },
       },
     ],
@@ -118,7 +121,7 @@ describe('createRouter', () => {
   beforeEach(async () => {
     metricProvidersRegistry = new MetricProvidersRegistry();
     thresholdResolver = new ThresholdResolver(
-      new ConfigReader({}),
+      mockServices.rootConfig({ data: {} }),
       metricProvidersRegistry.listProviders(),
     );
     const catalog = catalogServiceMock.mock();
@@ -170,12 +173,12 @@ describe('createRouter', () => {
   describe('GET /metrics', () => {
     beforeEach(() => {
       const githubProvider1 = new MockNumberProvider(
-        'github.open_prs',
+        'github.openPRs',
         'github',
         'GitHub Open PRs',
       );
       const githubProvider2 = new MockNumberProvider(
-        'github.open_issues',
+        'github.openIssues',
         'github',
         'GitHub Open Issues',
       );
@@ -198,14 +201,14 @@ describe('createRouter', () => {
       expect(response.body.metrics).toHaveLength(3);
 
       const metricIds = response.body.metrics.map((m: Metric) => m.id);
-      expect(metricIds).toContain('github.open_prs');
-      expect(metricIds).toContain('github.open_issues');
+      expect(metricIds).toContain('github.openPRs');
+      expect(metricIds).toContain('github.openIssues');
       expect(metricIds).toContain('sonar.quality');
     });
 
     it('should return metrics filtered by metricIds - single metric', async () => {
       const response = await request(app).get(
-        '/metrics?metricIds=github.open_prs',
+        '/metrics?metricIds=github.openPRs',
       );
 
       expect(response.status).toBe(200);
@@ -213,12 +216,12 @@ describe('createRouter', () => {
       expect(response.body.metrics).toHaveLength(1);
 
       const metricIds = response.body.metrics.map((m: Metric) => m.id);
-      expect(metricIds).toContain('github.open_prs');
+      expect(metricIds).toContain('github.openPRs');
     });
 
     it('should return metrics filtered by metricIds - multiple metrics', async () => {
       const response = await request(app).get(
-        '/metrics?metricIds=github.open_prs,github.open_issues',
+        '/metrics?metricIds=github.openPRs,github.openIssues',
       );
 
       expect(response.status).toBe(200);
@@ -226,13 +229,13 @@ describe('createRouter', () => {
       expect(response.body.metrics).toHaveLength(2);
 
       const metricIds = response.body.metrics.map((m: Metric) => m.id);
-      expect(metricIds).toContain('github.open_prs');
-      expect(metricIds).toContain('github.open_issues');
+      expect(metricIds).toContain('github.openPRs');
+      expect(metricIds).toContain('github.openIssues');
     });
 
     it('should return metrics filtered by metricIds with whitespace', async () => {
       const response = await request(app).get(
-        '/metrics?metricIds=github.open_prs, github.open_issues',
+        '/metrics?metricIds=github.openPRs, github.openIssues',
       );
 
       expect(response.status).toBe(200);
@@ -240,8 +243,8 @@ describe('createRouter', () => {
       expect(response.body.metrics).toHaveLength(2);
 
       const metricIds = response.body.metrics.map((m: Metric) => m.id);
-      expect(metricIds).toContain('github.open_prs');
-      expect(metricIds).toContain('github.open_issues');
+      expect(metricIds).toContain('github.openPRs');
+      expect(metricIds).toContain('github.openIssues');
     });
 
     it('should return 400 InputError when invalid metricIds parameter - empty string', async () => {
@@ -254,14 +257,14 @@ describe('createRouter', () => {
 
     it('should return only existing metrics when metricIds contains non-existent IDs', async () => {
       const response = await request(app).get(
-        '/metrics?metricIds=github.open_prs,non.existent.metric',
+        '/metrics?metricIds=github.openPRs,non.existent.metric',
       );
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('metrics');
       expect(response.body.metrics).toHaveLength(1);
 
-      expect(response.body.metrics[0].id).toBe('github.open_prs');
+      expect(response.body.metrics[0].id).toBe('github.openPRs');
     });
 
     it('should return metrics filtered by datasource', async () => {
@@ -272,8 +275,8 @@ describe('createRouter', () => {
       expect(response.body.metrics).toHaveLength(2);
 
       const metricIds = response.body.metrics.map((m: Metric) => m.id);
-      expect(metricIds).toContain('github.open_prs');
-      expect(metricIds).toContain('github.open_issues');
+      expect(metricIds).toContain('github.openPRs');
+      expect(metricIds).toContain('github.openIssues');
     });
 
     it('should return metrics filtered by datasource - sonar', async () => {
@@ -321,7 +324,7 @@ describe('createRouter', () => {
   describe('GET /metrics/catalog/:kind/:namespace/:name', () => {
     const mockMetricResults: MetricResult[] = [
       {
-        id: 'github.open_prs',
+        id: 'github.openPRs',
         status: 'success',
         metadata: githubNumberMetricMetadata,
         result: {
@@ -341,7 +344,7 @@ describe('createRouter', () => {
         },
       },
       {
-        id: 'github.open_issues',
+        id: 'github.openIssues',
         status: 'success',
         metadata: githubNumberMetricMetadata,
         result: {
@@ -409,13 +412,13 @@ describe('createRouter', () => {
 
     it('should handle multiple metricIds parameter', async () => {
       const response = await request(app).get(
-        '/metrics/catalog/component/default/my-service?metricIds=github.open_prs,github.open_issues',
+        '/metrics/catalog/component/default/my-service?metricIds=github.openPRs,github.openIssues',
       );
 
       expect(response.status).toBe(200);
       expect(catalogMetricService.getLatestEntityMetrics).toHaveBeenCalledWith(
         'component:default/my-service',
-        ['github.open_prs', 'github.open_issues'],
+        ['github.openPRs', 'github.openIssues'],
         undefined,
       );
       expect(response.body).toEqual(mockMetricResults);
@@ -441,13 +444,13 @@ describe('createRouter', () => {
 
     it('should handle single metricIds parameter', async () => {
       const response = await request(app).get(
-        '/metrics/catalog/component/default/my-service?metricIds=github.open_prs',
+        '/metrics/catalog/component/default/my-service?metricIds=github.openPRs',
       );
 
       expect(response.status).toBe(200);
       expect(catalogMetricService.getLatestEntityMetrics).toHaveBeenCalledWith(
         'component:default/my-service',
-        ['github.open_prs'],
+        ['github.openPRs'],
         undefined,
       );
     });
@@ -469,7 +472,7 @@ describe('createRouter', () => {
             {
               rule: 'HAS_METRIC_ID',
               resourceType: 'scorecard-metric',
-              params: { metricIds: ['github.open_prs', 'github.open_issues'] },
+              params: { metricIds: ['github.openPRs', 'github.openIssues'] },
             },
           ],
         },
@@ -503,6 +506,155 @@ describe('createRouter', () => {
     });
   });
 
+  describe('GET /metrics/catalog/:kind/:namespace/:name/time-series', () => {
+    const mockTimeSeriesResponse: MetricTimeSeriesResponse = {
+      metricId: 'github.openPRs',
+      entityRef: 'component:default/my-service',
+      metadata: {
+        title: 'GitHub open PRs',
+        description: 'The number of open pull requests.',
+        type: 'number',
+        unit: undefined,
+        history: true,
+        defaultVisualization: 'value',
+      },
+      points: [
+        { value: 8, timestamp: '2024-01-01T20:00:00.000Z' },
+        { value: 7, timestamp: '2024-01-02T12:00:00.000Z' },
+      ],
+    };
+
+    const timeSeriesPath =
+      '/metrics/catalog/component/default/my-service/time-series';
+    const validQuery =
+      'metricId=github.openPRs&from=2024-01-01T00:00:00.000Z&to=2024-01-31T23:59:59.000Z';
+
+    beforeEach(() => {
+      jest
+        .spyOn(catalogMetricService, 'getEntityMetricTimeSeries')
+        .mockResolvedValue(mockTimeSeriesResponse);
+    });
+
+    it('should return 403 Unauthorized when DENY permissions', async () => {
+      permissionsMock.authorizeConditional.mockResolvedValue([
+        { result: AuthorizeResult.DENY },
+      ]);
+      const result = await request(app).get(`${timeSeriesPath}?${validQuery}`);
+
+      expect(result.statusCode).toBe(403);
+      expect(result.body.error.name).toEqual('NotAllowedError');
+    });
+
+    it('should return time series for a specific entity and metric', async () => {
+      const response = await request(app).get(
+        `${timeSeriesPath}?${validQuery}`,
+      );
+
+      expect(response.status).toBe(200);
+      expect(
+        catalogMetricService.getEntityMetricTimeSeries,
+      ).toHaveBeenCalledWith(
+        'component:default/my-service',
+        'github.openPRs',
+        new Date('2024-01-01T00:00:00.000Z'),
+        new Date('2024-01-31T23:59:59.000Z'),
+        undefined,
+      );
+      expect(response.body).toEqual(mockTimeSeriesResponse);
+    });
+
+    it('should check entity access before returning time series', async () => {
+      const checkEntityAccessSpy = jest.spyOn(
+        permissionUtilsModule,
+        'checkEntityAccess',
+      );
+      const response = await request(app).get(
+        `${timeSeriesPath}?${validQuery}`,
+      );
+
+      expect(response.status).toBe(200);
+      expect(checkEntityAccessSpy).toHaveBeenCalledWith(
+        'component:default/my-service',
+        expect.any(Object),
+        permissionsMock,
+        httpAuthMock,
+      );
+    });
+
+    it('should filter authorized metrics when CONDITIONAL permission', async () => {
+      permissionsMock.authorizeConditional.mockResolvedValue([
+        CONDITIONAL_POLICY_DECISION,
+      ]);
+      const response = await request(app).get(
+        `${timeSeriesPath}?${validQuery}`,
+      );
+
+      expect(response.status).toBe(200);
+      expect(
+        catalogMetricService.getEntityMetricTimeSeries,
+      ).toHaveBeenCalledWith(
+        'component:default/my-service',
+        'github.openPRs',
+        new Date('2024-01-01T00:00:00.000Z'),
+        new Date('2024-01-31T23:59:59.000Z'),
+        {
+          anyOf: [
+            {
+              rule: 'HAS_METRIC_ID',
+              resourceType: 'scorecard-metric',
+              params: { metricIds: ['github.openPRs', 'github.openIssues'] },
+            },
+          ],
+        },
+      );
+    });
+
+    it('should return 404 NotFoundError when entity is not found', async () => {
+      jest
+        .spyOn(catalogMetricService, 'getEntityMetricTimeSeries')
+        .mockRejectedValue(
+          new NotFoundError('Entity not found: component:default/non-existent'),
+        );
+
+      const response = await request(app).get(
+        `/metrics/catalog/component/default/non-existent/time-series?${validQuery}`,
+      );
+
+      expect(response.status).toBe(404);
+      expect(response.body.error.name).toBe('NotFoundError');
+      expect(response.body.error.message).toContain('Entity not found');
+    });
+
+    it('should return 400 InputError when query parameters are missing', async () => {
+      const response = await request(app).get(timeSeriesPath);
+
+      expect(response.status).toBe(400);
+      expect(response.body.error.name).toBe('InputError');
+      expect(response.body.error.message).toContain('Invalid query parameters');
+    });
+
+    it('should return 400 InputError when from is after to', async () => {
+      const response = await request(app).get(
+        `${timeSeriesPath}?metricId=github.openPRs&from=2024-02-01T00:00:00.000Z&to=2024-01-01T00:00:00.000Z`,
+      );
+
+      expect(response.status).toBe(400);
+      expect(response.body.error.name).toBe('InputError');
+    });
+
+    it('should return 400 InputError when range exceeds 365 days', async () => {
+      const response = await request(app).get(
+        `${timeSeriesPath}?metricId=github.openPRs&from=2024-01-01T00:00:00.000Z&to=2025-01-01T00:00:00.001Z`,
+      );
+
+      expect(response.status).toBe(400);
+      expect(response.body.error.name).toBe('InputError');
+      expect(response.body.error.message).toContain(
+        'time range must not exceed 365 days',
+      );
+    });
+  });
+
   describe('GET /metrics/:metricId/catalog/aggregations', () => {
     const mockAggregatedMetric: AggregatedMetric = {
       values: {
@@ -517,46 +669,30 @@ describe('createRouter', () => {
     };
 
     const mockAggregatedMetricResult: AggregatedMetricResult = {
-      id: 'github.open_prs',
+      id: 'github.openPRs',
       status: 'success',
       metadata: {
         title: 'GitHub Open PRs',
         description: 'Mock number description.',
         type: 'number',
+        unit: undefined,
         history: undefined,
         aggregationType: 'statusGrouped',
       },
-      result: {
-        total: mockAggregatedMetric.total,
-        timestamp: mockAggregatedMetric.timestamp,
-        values: [
-          { count: 3, name: 'error' },
-          { count: 4, name: 'warning' },
-          { count: 5, name: 'success' },
-        ],
-        thresholds: {
-          rules: [
-            { key: 'error', expression: '>40' },
-            { key: 'warning', expression: '>20' },
-            { key: 'success', expression: '<=20' },
-          ],
-        },
-        entitiesConsidered: 2,
-        calculationErrorCount: 0,
-      },
+      result: mockStatusGroupedAggregationResult,
     };
 
     const mockDbAggregatedMetric: DbAggregatedMetric = {
-      metric_id: 'github.open_prs',
+      metricId: 'github.openPRs',
       total: 12,
-      max_timestamp: new Date('2025-01-01T10:30:00.000Z'),
+      maxTimestamp: new Date('2025-01-01T10:30:00.000Z'),
       statusCounts: {
         error: 3,
         warning: 4,
         success: 5,
       },
-      calculation_error_count: 1,
-      latest_entity_count: 1,
+      calculationErrorCount: 1,
+      latestEntityCount: 1,
     };
 
     let mockCatalog: ReturnType<typeof catalogServiceMock.mock>;
@@ -568,12 +704,12 @@ describe('createRouter', () => {
 
     beforeEach(async () => {
       const githubProvider = new MockNumberProvider(
-        'github.open_prs',
+        'github.openPRs',
         'github',
         'GitHub Open PRs',
       );
       const jiraProvider = new MockNumberProvider(
-        'jira.open_issues',
+        'jira.openIssues',
         'jira',
         'Jira Open Issues',
       );
@@ -644,14 +780,14 @@ describe('createRouter', () => {
         { result: AuthorizeResult.DENY },
       ]);
       const result = await request(aggregationApp).get(
-        '/metrics/github.open_prs/catalog/aggregations',
+        '/metrics/github.openPRs/catalog/aggregations',
       );
 
       expect(result.statusCode).toBe(403);
       expect(result.body.error.name).toEqual('NotAllowedError');
       expect(result.headers.deprecation).toBe('true');
       expect(result.headers.link).toBe(
-        '</aggregations/github.open_prs>; rel="alternate"',
+        '</aggregations/github.openPRs>; rel="alternate"',
       );
     });
 
@@ -660,7 +796,7 @@ describe('createRouter', () => {
         principal: {},
       } as any);
       const result = await request(aggregationApp).get(
-        '/metrics/github.open_prs/catalog/aggregations',
+        '/metrics/github.openPRs/catalog/aggregations',
       );
 
       expect(result.statusCode).toBe(401);
@@ -675,7 +811,7 @@ describe('createRouter', () => {
         CONDITIONAL_POLICY_DECISION,
       ]);
       const result = await request(aggregationApp).get(
-        '/metrics/jira.open_issues/catalog/aggregations',
+        '/metrics/jira.openIssues/catalog/aggregations',
       );
 
       expect(result.statusCode).toBe(403);
@@ -699,20 +835,20 @@ describe('createRouter', () => {
 
     it('should return aggregated metrics for a specific metric', async () => {
       const response = await request(aggregationApp).get(
-        '/metrics/github.open_prs/catalog/aggregations',
+        '/metrics/github.openPRs/catalog/aggregations',
       );
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockAggregatedMetricResult);
       expect(response.headers.deprecation).toBe('true');
       expect(response.headers.link).toBe(
-        '</aggregations/github.open_prs>; rel="alternate"',
+        '</aggregations/github.openPRs>; rel="alternate"',
       );
     });
 
     it('should call authorizeConditional to check permissions', async () => {
       await request(aggregationApp).get(
-        '/metrics/github.open_prs/catalog/aggregations',
+        '/metrics/github.openPRs/catalog/aggregations',
       );
 
       expect(permissionsMock.authorizeConditional).toHaveBeenCalledTimes(1);
@@ -720,7 +856,7 @@ describe('createRouter', () => {
 
     it('should call getEntitiesOwnedByUser to get entities owned by user', async () => {
       await request(aggregationApp).get(
-        '/metrics/github.open_prs/catalog/aggregations',
+        '/metrics/github.openPRs/catalog/aggregations',
       );
 
       expect(getEntitiesOwnedByUserSpy).toHaveBeenCalledTimes(1);
@@ -737,11 +873,11 @@ describe('createRouter', () => {
       const emptyAggregatedMetric = AggregatedMetricMapper.toAggregatedMetric();
       const { AggregatedMetricMapper: ActualAggregatedMetricMapper } =
         jest.requireActual<typeof import('./mappers')>('./mappers');
-      const provider = metricProvidersRegistry.getProvider('github.open_prs');
-      const thresholds = provider.getMetricThresholds();
+      const metric = metricProvidersRegistry.getMetric('github.openPRs');
+      const thresholds = thresholdResolver.resolveMetricThresholds(metric);
       const emptyAggregatedMetricResult =
         ActualAggregatedMetricMapper.toAggregatedMetricResult(
-          provider.getMetric(),
+          metric,
           {
             total: 0,
             timestamp: emptyAggregatedMetric.timestamp,
@@ -754,11 +890,11 @@ describe('createRouter', () => {
             calculationErrorCount: 0,
           },
           {
-            id: 'github.open_prs',
+            id: 'github.openPRs',
             title: 'GitHub Open PRs',
             description: 'Mock number description.',
             type: aggregationTypes.statusGrouped,
-            metricId: 'github.open_prs',
+            metricId: 'github.openPRs',
           },
         );
 
@@ -768,7 +904,7 @@ describe('createRouter', () => {
       );
 
       const response = await request(aggregationApp).get(
-        '/metrics/github.open_prs/catalog/aggregations',
+        '/metrics/github.openPRs/catalog/aggregations',
       );
 
       expect(response.status).toBe(200);
@@ -780,19 +916,19 @@ describe('createRouter', () => {
 
     it('should call readAggregatedMetricByEntityRefs to get aggregated metric', async () => {
       await request(aggregationApp).get(
-        '/metrics/github.open_prs/catalog/aggregations',
+        '/metrics/github.openPRs/catalog/aggregations',
       );
 
       expect(readAggregatedMetricByEntityRefsSpy).toHaveBeenCalledTimes(1);
       expect(readAggregatedMetricByEntityRefsSpy).toHaveBeenCalledWith(
         ['component:default/my-service', 'component:default/my-other-service'],
-        'github.open_prs',
+        'github.openPRs',
       );
     });
 
     it('should check entity access for each entity owned by user', async () => {
       await request(aggregationApp).get(
-        '/metrics/github.open_prs/catalog/aggregations',
+        '/metrics/github.openPRs/catalog/aggregations',
       );
 
       expect(checkEntityAccessSpy).toHaveBeenCalledTimes(2);
@@ -812,20 +948,20 @@ describe('createRouter', () => {
 
     it('should call toAggregatedMetricResult to map aggregated data to the API result', async () => {
       await request(aggregationApp).get(
-        '/metrics/github.open_prs/catalog/aggregations',
+        '/metrics/github.openPRs/catalog/aggregations',
       );
 
       expect(toAggregatedMetricResultSpy).toHaveBeenCalledTimes(1);
       expect(toAggregatedMetricResultSpy).toHaveBeenCalledWith(
-        metricProvidersRegistry.getMetric('github.open_prs'),
+        metricProvidersRegistry.getMetric('github.openPRs'),
         expect.objectContaining({
           total: mockAggregatedMetric.total,
           timestamp: mockAggregatedMetric.timestamp,
         }),
         expect.objectContaining({
-          id: 'github.open_prs',
+          id: 'github.openPRs',
           type: aggregationTypes.statusGrouped,
-          metricId: 'github.open_prs',
+          metricId: 'github.openPRs',
         }),
       );
     });
@@ -833,7 +969,7 @@ describe('createRouter', () => {
     it('should use registry.getMetric to resolve the correct metric for batch providers', async () => {
       const batchProvider = new MockBatchBooleanProvider(
         'filecheck',
-        'filecheck',
+        'filecheck.fileExistence',
         [
           { id: 'readme', path: 'README.md' },
           { id: 'license', path: 'LICENSE' },
@@ -874,7 +1010,7 @@ describe('createRouter', () => {
         expect.objectContaining({
           total: mockAggregatedMetric.total,
           timestamp: mockAggregatedMetric.timestamp,
-          thresholds: batchProvider.getMetricThresholds(),
+          thresholds: batchProvider.getMetrics()[0].thresholds,
         }),
         expect.objectContaining({
           id: 'filecheck.license',
@@ -895,12 +1031,13 @@ describe('createRouter', () => {
     };
 
     const mockAggregatedMetricResult: AggregatedMetricResult = {
-      id: 'github.open_prs',
+      id: 'github.openPRs',
       status: 'success',
       metadata: {
         title: 'GitHub Open PRs',
         description: 'Mock number description.',
         type: 'number',
+        unit: undefined,
         history: undefined,
         aggregationType: 'statusGrouped',
       },
@@ -925,16 +1062,16 @@ describe('createRouter', () => {
     };
 
     const mockDbAggregatedMetricForAgId: DbAggregatedMetric = {
-      metric_id: 'github.open_prs',
+      metricId: 'github.openPRs',
       total: 6,
-      max_timestamp: new Date('2025-01-01T10:30:00.000Z'),
+      maxTimestamp: new Date('2025-01-01T10:30:00.000Z'),
       statusCounts: {
         error: 1,
         warning: 2,
         success: 3,
       },
-      calculation_error_count: 1,
-      latest_entity_count: 1,
+      calculationErrorCount: 1,
+      latestEntityCount: 1,
     };
 
     let metricRegistry: MetricProvidersRegistry;
@@ -946,10 +1083,10 @@ describe('createRouter', () => {
     beforeEach(async () => {
       metricRegistry = new MetricProvidersRegistry();
       metricRegistry.register(
-        new MockNumberProvider('github.open_prs', 'github', 'GitHub Open PRs'),
+        new MockNumberProvider('github.openPRs', 'github', 'GitHub Open PRs'),
       );
       metricRegistry.register(
-        new MockNumberProvider('jira.open_issues', 'jira', 'Jira Open Issues'),
+        new MockNumberProvider('jira.openIssues', 'jira', 'Jira Open Issues'),
       );
 
       mockCatalog = catalogServiceMock.mock();
@@ -1029,7 +1166,7 @@ describe('createRouter', () => {
 
     it('should return 200 with correct response body', async () => {
       const response = await request(aggregationsApp).get(
-        '/aggregations/github.open_prs',
+        '/aggregations/github.openPRs',
       );
 
       expect(response.status).toBe(200);
@@ -1039,11 +1176,11 @@ describe('createRouter', () => {
     });
 
     it('should call readAggregatedMetricByEntityRefs when no KPI config', async () => {
-      await request(aggregationsApp).get('/aggregations/github.open_prs');
+      await request(aggregationsApp).get('/aggregations/github.openPRs');
 
       expect(readAggregatedMetricByEntityRefsSpyAgId).toHaveBeenCalledWith(
         ['component:default/my-service', 'component:default/my-other-service'],
-        'github.open_prs',
+        'github.openPRs',
       );
     });
 
@@ -1053,7 +1190,7 @@ describe('createRouter', () => {
       ]);
 
       const response = await request(aggregationsApp).get(
-        '/aggregations/github.open_prs',
+        '/aggregations/github.openPRs',
       );
 
       expect(response.status).toBe(403);
@@ -1066,7 +1203,7 @@ describe('createRouter', () => {
       } as any);
 
       const response = await request(aggregationsApp).get(
-        '/aggregations/github.open_prs',
+        '/aggregations/github.openPRs',
       );
 
       expect(response.status).toBe(401);
@@ -1076,7 +1213,7 @@ describe('createRouter', () => {
     it('should resolve the correct metric for batch providers', async () => {
       const batchProvider = new MockBatchBooleanProvider(
         'filecheck',
-        'filecheck',
+        'filecheck.fileExistence',
         [
           { id: 'readme', path: 'README.md' },
           { id: 'license', path: 'LICENSE' },
@@ -1129,14 +1266,16 @@ describe('createRouter', () => {
     });
 
     it('should use KPI config metricId and type when aggregationId is a KPI key', async () => {
-      const kpiConfig = new ConfigReader({
-        scorecard: {
-          aggregationKPIs: {
-            myKpi: {
-              title: 'Custom KPI title',
-              description: 'Custom KPI description',
-              type: 'statusGrouped',
-              metricId: 'github.open_prs',
+      const kpiConfig = mockServices.rootConfig({
+        data: {
+          scorecard: {
+            aggregationKPIs: {
+              myKpi: {
+                title: 'Custom KPI title',
+                description: 'Custom KPI description',
+                type: 'statusGrouped',
+                metricId: 'github.openPRs',
+              },
             },
           },
         },
@@ -1183,24 +1322,26 @@ describe('createRouter', () => {
 
       expect(getSpy).toHaveBeenCalledWith(
         ['component:default/my-service', 'component:default/my-other-service'],
-        'github.open_prs',
+        'github.openPRs',
       );
     });
 
-    it('should use KPI type average when configured', async () => {
-      const kpiConfig = new ConfigReader({
-        scorecard: {
-          aggregationKPIs: {
-            avgKpi: {
-              title: 'Weighted health KPI',
-              description: 'Weighted average',
-              type: 'average',
-              metricId: 'github.open_prs',
-              options: {
-                statusScores: {
-                  error: 0,
-                  warning: 50,
-                  success: 100,
+    it('should use KPI type weightedStatusScore when configured', async () => {
+      const kpiConfig = mockServices.rootConfig({
+        data: {
+          scorecard: {
+            aggregationKPIs: {
+              weightedKpi: {
+                title: 'Weighted health KPI',
+                description: 'Weighted status score',
+                type: 'weightedStatusScore',
+                metricId: 'github.openPRs',
+                options: {
+                  statusScores: {
+                    error: 0,
+                    warning: 50,
+                    success: 100,
+                  },
                 },
               },
             },
@@ -1224,7 +1365,7 @@ describe('createRouter', () => {
         .spyOn(mockDatabaseMetricValues, 'readAggregatedMetricByEntityRefs')
         .mockResolvedValue(mockDbAggregatedMetricForAgId);
 
-      const aggregationsServiceAvg = createTestAggregationsService(
+      const aggregationsServiceWeightedKpi = createTestAggregationsService(
         mockDatabaseMetricValues as unknown as DatabaseMetricValues,
         kpiConfig,
       );
@@ -1232,7 +1373,7 @@ describe('createRouter', () => {
       const router = await createRouter({
         metricProvidersRegistry: metricRegistry,
         service: {
-          aggregationsService: aggregationsServiceAvg,
+          aggregationsService: aggregationsServiceWeightedKpi,
           catalogMetricService: kpiService,
         },
         catalog: mockCatalog,
@@ -1245,12 +1386,187 @@ describe('createRouter', () => {
       kpiApp.use(router);
       kpiApp.use(mockErrorHandler());
 
-      await request(kpiApp).get('/aggregations/avgKpi');
+      await request(kpiApp).get('/aggregations/weightedKpi');
 
       expect(getSpy).toHaveBeenCalledWith(
         ['component:default/my-service', 'component:default/my-other-service'],
-        'github.open_prs',
+        'github.openPRs',
       );
+    });
+
+    it('should use KPI type sum and return scalar result', async () => {
+      const kpiConfig = mockServices.rootConfig({
+        data: {
+          scorecard: {
+            aggregationKPIs: {
+              totalOpenPrs: {
+                title: 'Total Open PRs',
+                description: 'Sum of open PRs',
+                type: aggregationTypes.sum,
+                metricId: 'github.openPRs',
+              },
+            },
+          },
+        },
+      });
+      const kpiService = new CatalogMetricService({
+        catalog: mockCatalog,
+        auth: mockServices.auth.mock({
+          getOwnServiceCredentials: jest.fn().mockResolvedValue({
+            token: 'test-token',
+          }),
+        }),
+        registry: metricRegistry,
+        database: mockDatabaseMetricValues,
+        logger: mockServices.logger.mock(),
+        thresholdResolver,
+      });
+
+      const getSpy = jest
+        .spyOn(
+          mockDatabaseMetricValues,
+          'readScalarAggregatedMetricByEntityRefs',
+        )
+        .mockResolvedValue({
+          metricId: 'github.openPRs',
+          value: 847,
+          total: 42,
+          latestEntityCount: 45,
+          calculationErrorCount: 3,
+          maxTimestamp: new Date('2025-01-01T10:30:00.000Z'),
+        });
+
+      jest
+        .spyOn(AggregatedMetricMapper, 'toAggregatedMetricResult')
+        .mockRestore();
+
+      const aggregationsServiceSum = createTestAggregationsService(
+        mockDatabaseMetricValues as unknown as DatabaseMetricValues,
+        kpiConfig,
+      );
+
+      const router = await createRouter({
+        metricProvidersRegistry: metricRegistry,
+        service: {
+          aggregationsService: aggregationsServiceSum,
+          catalogMetricService: kpiService,
+        },
+        catalog: mockCatalog,
+        httpAuth: httpAuthMock,
+        permissions: permissionsMock,
+        logger: mockServices.logger.mock(),
+        thresholdResolver,
+      });
+      const kpiApp = express();
+      kpiApp.use(router);
+      kpiApp.use(mockErrorHandler());
+
+      const response = await request(kpiApp).get('/aggregations/totalOpenPrs');
+
+      expect(response.status).toBe(200);
+      expect(getSpy).toHaveBeenCalledWith(
+        ['component:default/my-service', 'component:default/my-other-service'],
+        'github.openPRs',
+        'sum',
+        undefined,
+      );
+      expect(response.body.metadata.aggregationType).toBe(aggregationTypes.sum);
+      expect(response.body.result).toEqual({
+        value: 847,
+        total: 42,
+        entitiesConsidered: 45,
+        calculationErrorCount: 3,
+        timestamp: '2025-01-01T10:30:00.000Z',
+        thresholds: DEFAULT_NUMBER_THRESHOLDS,
+      });
+    });
+
+    it('should use KPI filter.status and return filtered scalar result', async () => {
+      const kpiConfig = mockServices.rootConfig({
+        data: {
+          scorecard: {
+            aggregationKPIs: {
+              totalCriticalBugs: {
+                title: 'Total Critical Bugs',
+                description: 'Sum for entities in error status',
+                type: aggregationTypes.sum,
+                metricId: 'jira.openIssues',
+                filter: {
+                  status: 'error',
+                },
+              },
+            },
+          },
+        },
+      });
+
+      const kpiService = new CatalogMetricService({
+        catalog: mockCatalog,
+        auth: mockServices.auth.mock({
+          getOwnServiceCredentials: jest.fn().mockResolvedValue({
+            token: 'test-token',
+          }),
+        }),
+        registry: metricRegistry,
+        database: mockDatabaseMetricValues,
+        logger: mockServices.logger.mock(),
+        thresholdResolver,
+      });
+
+      const getSpy = jest
+        .spyOn(
+          mockDatabaseMetricValues,
+          'readScalarAggregatedMetricByEntityRefs',
+        )
+        .mockResolvedValue({
+          metricId: 'jira.openIssues',
+          value: 30,
+          total: 2,
+          latestEntityCount: 4,
+          calculationErrorCount: 1,
+          maxTimestamp: new Date('2025-01-01T10:30:00.000Z'),
+        });
+
+      jest
+        .spyOn(AggregatedMetricMapper, 'toAggregatedMetricResult')
+        .mockRestore();
+
+      const aggregationsServiceFiltered = createTestAggregationsService(
+        mockDatabaseMetricValues,
+        kpiConfig,
+      );
+
+      const router = await createRouter({
+        metricProvidersRegistry: metricRegistry,
+        service: {
+          aggregationsService: aggregationsServiceFiltered,
+          catalogMetricService: kpiService,
+        },
+        catalog: mockCatalog,
+        httpAuth: httpAuthMock,
+        permissions: permissionsMock,
+        logger: mockServices.logger.mock(),
+        thresholdResolver,
+      });
+      const kpiApp = express();
+      kpiApp.use(router);
+      kpiApp.use(mockErrorHandler());
+
+      const response = await request(kpiApp).get(
+        '/aggregations/totalCriticalBugs',
+      );
+
+      expect(response.status).toBe(200);
+      expect(getSpy).toHaveBeenCalledWith(
+        ['component:default/my-service', 'component:default/my-other-service'],
+        'jira.openIssues',
+        'sum',
+        { status: 'error' },
+      );
+      expect(response.body.metadata.filter).toEqual({ status: 'error' });
+      expect(response.body.result.value).toBe(30);
+      expect(response.body.result.total).toBe(2);
+      expect(response.body.result.entitiesConsidered).toBe(4);
     });
   });
 
@@ -1263,19 +1579,21 @@ describe('createRouter', () => {
     beforeEach(async () => {
       metaRegistry = new MetricProvidersRegistry();
       metaRegistry.register(
-        new MockNumberProvider('github.open_prs', 'github', 'GitHub Open PRs'),
+        new MockNumberProvider('github.openPRs', 'github', 'GitHub Open PRs'),
       );
 
       metaCatalog = catalogServiceMock.mock();
 
-      const metaAggregationConfig = new ConfigReader({
-        scorecard: {
-          aggregationKPIs: {
-            myKpi: {
-              title: 'Custom KPI title',
-              description: 'Custom KPI description',
-              type: 'statusGrouped',
-              metricId: 'github.open_prs',
+      const metaAggregationConfig = mockServices.rootConfig({
+        data: {
+          scorecard: {
+            aggregationKPIs: {
+              myKpi: {
+                title: 'Custom KPI title',
+                description: 'Custom KPI description',
+                type: 'statusGrouped',
+                metricId: 'github.openPRs',
+              },
             },
           },
         },
@@ -1326,6 +1644,7 @@ describe('createRouter', () => {
         title: 'Custom KPI title',
         description: 'Custom KPI description',
         type: 'number',
+        unit: undefined,
         history: undefined,
         aggregationType: 'statusGrouped',
       });
@@ -1334,7 +1653,7 @@ describe('createRouter', () => {
     it('should resolve the correct metric metadata for batch providers', async () => {
       const batchProvider = new MockBatchBooleanProvider(
         'filecheck',
-        'filecheck',
+        'filecheck.fileExistence',
         [
           { id: 'readme', path: 'README.md' },
           { id: 'license', path: 'LICENSE' },
@@ -1406,18 +1725,113 @@ describe('createRouter', () => {
       svcApp.use(mockErrorHandler());
 
       const response = await request(svcApp).get(
-        '/aggregations/github.open_prs/metadata',
+        '/aggregations/github.openPRs/metadata',
       );
 
       expect(response.status).toBe(200);
       expect(response.body.title).toBe('GitHub Open PRs');
       expect(response.body.aggregationType).toBe('statusGrouped');
     });
+
+    it('should include filter in metadata for scalar KPI with filter.status', async () => {
+      const filteredMetaConfig = mockServices.rootConfig({
+        data: {
+          scorecard: {
+            aggregationKPIs: {
+              totalCriticalBugs: {
+                title: 'Total Critical Bugs',
+                description: 'Sum for entities in error status',
+                type: aggregationTypes.sum,
+                metricId: 'github.openPRs',
+                filter: {
+                  status: 'error',
+                },
+              },
+            },
+          },
+        },
+      });
+
+      const aggregationsMetaServiceFiltered = createTestAggregationsService(
+        mockDatabaseMetricValues as unknown as DatabaseMetricValues,
+        filteredMetaConfig,
+      );
+
+      const router = await createRouter({
+        metricProvidersRegistry: metaRegistry,
+        service: {
+          aggregationsService: aggregationsMetaServiceFiltered,
+          catalogMetricService: metaCatalogMetricService,
+        },
+        catalog: metaCatalog,
+        httpAuth: httpAuthMock,
+        permissions: permissionsMock,
+        logger: mockServices.logger.mock(),
+        thresholdResolver,
+      });
+      const filteredMetaApp = express();
+      filteredMetaApp.use(router);
+      filteredMetaApp.use(mockErrorHandler());
+
+      const response = await request(filteredMetaApp).get(
+        '/aggregations/totalCriticalBugs/metadata',
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body.filter).toEqual({ status: 'error' });
+      expect(response.body.aggregationType).toBe(aggregationTypes.sum);
+    });
+
+    it('should omit filter in metadata for scalar KPI without filter', async () => {
+      const scalarMetaConfig = mockServices.rootConfig({
+        data: {
+          scorecard: {
+            aggregationKPIs: {
+              totalOpenPrs: {
+                title: 'Total Open PRs',
+                description: 'Sum of open PRs',
+                type: aggregationTypes.sum,
+                metricId: 'github.openPRs',
+              },
+            },
+          },
+        },
+      });
+
+      const aggregationsMetaServiceScalar = createTestAggregationsService(
+        mockDatabaseMetricValues as unknown as DatabaseMetricValues,
+        scalarMetaConfig,
+      );
+
+      const router = await createRouter({
+        metricProvidersRegistry: metaRegistry,
+        service: {
+          aggregationsService: aggregationsMetaServiceScalar,
+          catalogMetricService: metaCatalogMetricService,
+        },
+        catalog: metaCatalog,
+        httpAuth: httpAuthMock,
+        permissions: permissionsMock,
+        logger: mockServices.logger.mock(),
+        thresholdResolver,
+      });
+      const scalarMetaApp = express();
+      scalarMetaApp.use(router);
+      scalarMetaApp.use(mockErrorHandler());
+
+      const response = await request(scalarMetaApp).get(
+        '/aggregations/totalOpenPrs/metadata',
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body).not.toHaveProperty('filter');
+      expect(response.body.aggregationType).toBe(aggregationTypes.sum);
+    });
   });
 
   describe('GET /metrics/:metricId/catalog/aggregations/entities', () => {
     const mockEntityMetricDetailResponse = {
-      metricId: 'github.open_prs',
+      metricId: 'github.openPRs',
       metricMetadata: {
         title: 'GitHub Open PRs',
         description: 'Mock number description.',
@@ -1463,14 +1877,14 @@ describe('createRouter', () => {
 
     beforeEach(async () => {
       const githubProvider = new MockNumberProvider(
-        'github.open_prs',
+        'github.openPRs',
         'github',
         'GitHub Open PRs',
       );
       metricProvidersRegistry.register(githubProvider);
 
       const jiraProvider = new MockNumberProvider(
-        'jira.open_issues',
+        'jira.openIssues',
         'jira',
         'Jira Open Issues',
       );
@@ -1507,13 +1921,13 @@ describe('createRouter', () => {
 
     it('should return entity metric details with default pagination', async () => {
       const response = await request(drillDownApp).get(
-        '/metrics/github.open_prs/catalog/aggregations/entities',
+        '/metrics/github.openPRs/catalog/aggregations/entities',
       );
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockEntityMetricDetailResponse);
       expect(getEntityMetricDetailsSpy).toHaveBeenCalledWith(
-        'github.open_prs',
+        'github.openPRs',
         mockCredentials,
         {
           status: undefined,
@@ -1530,11 +1944,11 @@ describe('createRouter', () => {
 
     it('should handle custom page and pageSize', async () => {
       await request(drillDownApp).get(
-        '/metrics/github.open_prs/catalog/aggregations/entities?page=2&pageSize=20',
+        '/metrics/github.openPRs/catalog/aggregations/entities?page=2&pageSize=20',
       );
 
       expect(getEntityMetricDetailsSpy).toHaveBeenCalledWith(
-        'github.open_prs',
+        'github.openPRs',
         mockCredentials,
         expect.objectContaining({
           page: 2,
@@ -1545,7 +1959,7 @@ describe('createRouter', () => {
 
     it('should return 400 when pageSize exceeds max of 100', async () => {
       const response = await request(drillDownApp).get(
-        '/metrics/github.open_prs/catalog/aggregations/entities?pageSize=200',
+        '/metrics/github.openPRs/catalog/aggregations/entities?pageSize=200',
       );
 
       expect(response.status).toBe(400);
@@ -1556,12 +1970,12 @@ describe('createRouter', () => {
 
     it('should accept pageSize at max boundary of 100', async () => {
       const response = await request(drillDownApp).get(
-        '/metrics/github.open_prs/catalog/aggregations/entities?pageSize=100',
+        '/metrics/github.openPRs/catalog/aggregations/entities?pageSize=100',
       );
 
       expect(response.status).toBe(200);
       expect(getEntityMetricDetailsSpy).toHaveBeenCalledWith(
-        'github.open_prs',
+        'github.openPRs',
         mockCredentials,
         expect.objectContaining({
           limit: 100,
@@ -1571,11 +1985,11 @@ describe('createRouter', () => {
 
     it('should filter by status', async () => {
       await request(drillDownApp).get(
-        '/metrics/github.open_prs/catalog/aggregations/entities?status=error',
+        '/metrics/github.openPRs/catalog/aggregations/entities?status=error',
       );
 
       expect(getEntityMetricDetailsSpy).toHaveBeenCalledWith(
-        'github.open_prs',
+        'github.openPRs',
         mockCredentials,
         expect.objectContaining({
           status: 'error',
@@ -1585,11 +1999,11 @@ describe('createRouter', () => {
 
     it('should filter by owner', async () => {
       await request(drillDownApp).get(
-        '/metrics/github.open_prs/catalog/aggregations/entities?owner=team:default/platform',
+        '/metrics/github.openPRs/catalog/aggregations/entities?owner=team:default/platform',
       );
 
       expect(getEntityMetricDetailsSpy).toHaveBeenCalledWith(
-        'github.open_prs',
+        'github.openPRs',
         mockCredentials,
         expect.objectContaining({
           owner: ['team:default/platform'],
@@ -1599,11 +2013,11 @@ describe('createRouter', () => {
 
     it('should filter by kind', async () => {
       await request(drillDownApp).get(
-        '/metrics/github.open_prs/catalog/aggregations/entities?kind=Component',
+        '/metrics/github.openPRs/catalog/aggregations/entities?kind=Component',
       );
 
       expect(getEntityMetricDetailsSpy).toHaveBeenCalledWith(
-        'github.open_prs',
+        'github.openPRs',
         mockCredentials,
         expect.objectContaining({
           kind: 'Component',
@@ -1613,11 +2027,11 @@ describe('createRouter', () => {
 
     it('should filter by entityName', async () => {
       await request(drillDownApp).get(
-        '/metrics/github.open_prs/catalog/aggregations/entities?entityName=service',
+        '/metrics/github.openPRs/catalog/aggregations/entities?entityName=service',
       );
 
       expect(getEntityMetricDetailsSpy).toHaveBeenCalledWith(
-        'github.open_prs',
+        'github.openPRs',
         mockCredentials,
         expect.objectContaining({
           entityName: 'service',
@@ -1627,11 +2041,11 @@ describe('createRouter', () => {
 
     it('should sort by entityName ascending', async () => {
       await request(drillDownApp).get(
-        '/metrics/github.open_prs/catalog/aggregations/entities?sortBy=entityName&sortOrder=asc',
+        '/metrics/github.openPRs/catalog/aggregations/entities?sortBy=entityName&sortOrder=asc',
       );
 
       expect(getEntityMetricDetailsSpy).toHaveBeenCalledWith(
-        'github.open_prs',
+        'github.openPRs',
         mockCredentials,
         expect.objectContaining({
           sortBy: 'entityName',
@@ -1642,11 +2056,11 @@ describe('createRouter', () => {
 
     it('should sort by metricValue descending', async () => {
       await request(drillDownApp).get(
-        '/metrics/github.open_prs/catalog/aggregations/entities?sortBy=metricValue&sortOrder=desc',
+        '/metrics/github.openPRs/catalog/aggregations/entities?sortBy=metricValue&sortOrder=desc',
       );
 
       expect(getEntityMetricDetailsSpy).toHaveBeenCalledWith(
-        'github.open_prs',
+        'github.openPRs',
         mockCredentials,
         expect.objectContaining({
           sortBy: 'metricValue',
@@ -1657,11 +2071,11 @@ describe('createRouter', () => {
 
     it('should combine multiple filters', async () => {
       await request(drillDownApp).get(
-        '/metrics/github.open_prs/catalog/aggregations/entities?status=error&kind=Component&owner=team:default/platform&sortBy=metricValue&sortOrder=desc',
+        '/metrics/github.openPRs/catalog/aggregations/entities?status=error&kind=Component&owner=team:default/platform&sortBy=metricValue&sortOrder=desc',
       );
 
       expect(getEntityMetricDetailsSpy).toHaveBeenCalledWith(
-        'github.open_prs',
+        'github.openPRs',
         mockCredentials,
         expect.objectContaining({
           status: 'error',
@@ -1679,7 +2093,7 @@ describe('createRouter', () => {
       ]);
 
       const response = await request(drillDownApp).get(
-        '/metrics/github.open_prs/catalog/aggregations/entities',
+        '/metrics/github.openPRs/catalog/aggregations/entities',
       );
 
       expect(response.status).toBe(403);
@@ -1692,7 +2106,7 @@ describe('createRouter', () => {
       } as any);
 
       const response = await request(drillDownApp).get(
-        '/metrics/github.open_prs/catalog/aggregations/entities',
+        '/metrics/github.openPRs/catalog/aggregations/entities',
       );
 
       expect(response.status).toBe(401);
@@ -1708,7 +2122,7 @@ describe('createRouter', () => {
       ]);
 
       const response = await request(drillDownApp).get(
-        '/metrics/jira.open_issues/catalog/aggregations/entities',
+        '/metrics/jira.openIssues/catalog/aggregations/entities',
       );
 
       expect(response.status).toBe(403);
@@ -1726,7 +2140,7 @@ describe('createRouter', () => {
 
     it('should return empty entities array when no results', async () => {
       getEntityMetricDetailsSpy.mockResolvedValue({
-        metricId: 'github.open_prs',
+        metricId: 'github.openPRs',
         metricMetadata: mockEntityMetricDetailResponse.metricMetadata,
         entities: [],
         pagination: {
@@ -1744,7 +2158,7 @@ describe('createRouter', () => {
       });
 
       const response = await request(drillDownApp).get(
-        '/metrics/github.open_prs/catalog/aggregations/entities',
+        '/metrics/github.openPRs/catalog/aggregations/entities',
       );
 
       expect(response.status).toBe(200);
@@ -1754,11 +2168,11 @@ describe('createRouter', () => {
 
     it('should normalize multi-value owner params to an array', async () => {
       await request(drillDownApp).get(
-        '/metrics/github.open_prs/catalog/aggregations/entities?owner=team:default/platform&owner=user:default/alice',
+        '/metrics/github.openPRs/catalog/aggregations/entities?owner=team:default/platform&owner=user:default/alice',
       );
 
       expect(getEntityMetricDetailsSpy).toHaveBeenCalledWith(
-        'github.open_prs',
+        'github.openPRs',
         mockCredentials,
         expect.objectContaining({
           owner: ['team:default/platform', 'user:default/alice'],
@@ -1769,7 +2183,7 @@ describe('createRouter', () => {
     describe('input validation', () => {
       it('should return 400 when page is 0', async () => {
         const response = await request(drillDownApp).get(
-          '/metrics/github.open_prs/catalog/aggregations/entities?page=0',
+          '/metrics/github.openPRs/catalog/aggregations/entities?page=0',
         );
 
         expect(response.status).toBe(400);
@@ -1782,7 +2196,7 @@ describe('createRouter', () => {
 
       it('should return 400 when page is negative', async () => {
         const response = await request(drillDownApp).get(
-          '/metrics/github.open_prs/catalog/aggregations/entities?page=-1',
+          '/metrics/github.openPRs/catalog/aggregations/entities?page=-1',
         );
 
         expect(response.status).toBe(400);
@@ -1795,7 +2209,7 @@ describe('createRouter', () => {
 
       it('should return 400 when page exceeds max of 10000', async () => {
         const response = await request(drillDownApp).get(
-          '/metrics/github.open_prs/catalog/aggregations/entities?page=10001',
+          '/metrics/github.openPRs/catalog/aggregations/entities?page=10001',
         );
 
         expect(response.status).toBe(400);
@@ -1808,7 +2222,7 @@ describe('createRouter', () => {
 
       it('should return 400 when pageSize is 0', async () => {
         const response = await request(drillDownApp).get(
-          '/metrics/github.open_prs/catalog/aggregations/entities?pageSize=0',
+          '/metrics/github.openPRs/catalog/aggregations/entities?pageSize=0',
         );
 
         expect(response.status).toBe(400);
@@ -1821,7 +2235,7 @@ describe('createRouter', () => {
 
       it('should return 400 when status is an empty string', async () => {
         const response = await request(drillDownApp).get(
-          '/metrics/github.open_prs/catalog/aggregations/entities?status=',
+          '/metrics/github.openPRs/catalog/aggregations/entities?status=',
         );
 
         expect(response.status).toBe(400);
@@ -1834,7 +2248,7 @@ describe('createRouter', () => {
 
       it('should return 400 when sortBy is an invalid value', async () => {
         const response = await request(drillDownApp).get(
-          '/metrics/github.open_prs/catalog/aggregations/entities?sortBy=invalid',
+          '/metrics/github.openPRs/catalog/aggregations/entities?sortBy=invalid',
         );
 
         expect(response.status).toBe(400);
@@ -1847,7 +2261,7 @@ describe('createRouter', () => {
 
       it('should return 400 when sortOrder is an invalid value', async () => {
         const response = await request(drillDownApp).get(
-          '/metrics/github.open_prs/catalog/aggregations/entities?sortOrder=random',
+          '/metrics/github.openPRs/catalog/aggregations/entities?sortOrder=random',
         );
 
         expect(response.status).toBe(400);
@@ -1860,7 +2274,7 @@ describe('createRouter', () => {
 
       it('should return 400 when owner is an empty string', async () => {
         const response = await request(drillDownApp).get(
-          '/metrics/github.open_prs/catalog/aggregations/entities?owner=',
+          '/metrics/github.openPRs/catalog/aggregations/entities?owner=',
         );
 
         expect(response.status).toBe(400);
@@ -1873,7 +2287,7 @@ describe('createRouter', () => {
 
       it('should return 400 when kind is an empty string', async () => {
         const response = await request(drillDownApp).get(
-          '/metrics/github.open_prs/catalog/aggregations/entities?kind=',
+          '/metrics/github.openPRs/catalog/aggregations/entities?kind=',
         );
 
         expect(response.status).toBe(400);
@@ -1886,7 +2300,7 @@ describe('createRouter', () => {
 
       it('should return 400 when entityName is an empty string', async () => {
         const response = await request(drillDownApp).get(
-          '/metrics/github.open_prs/catalog/aggregations/entities?entityName=',
+          '/metrics/github.openPRs/catalog/aggregations/entities?entityName=',
         );
 
         expect(response.status).toBe(400);

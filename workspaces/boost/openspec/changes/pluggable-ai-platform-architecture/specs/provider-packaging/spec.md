@@ -61,7 +61,7 @@ The Kagenti provider MUST be packaged as an independent Backstage backend module
 
 #### Scenario: Keycloak token cache uses Backstage cacheService
 
-- **WHEN** the Kagenti module caches Keycloak access tokens (currently `KeycloakTokenManager`)
+- **WHEN** the Kagenti module caches Keycloak access tokens (currently `KeycloakAuthClient`)
 - **THEN** it uses `coreServices.cache` with TTL derived from token expiry
 - **AND** the token cache is Redis-backed in production for multi-instance safety
 
@@ -72,7 +72,7 @@ Provider-internal subsystems with zero Backstage coupling MUST be extracted as s
 #### Scenario: toolscope extracted as standalone package
 
 - **WHEN** the `services/toolscope/` subsystem (29 files, zero Backstage dependencies) is needed
-- **THEN** it is available as `@boost/toolscope`
+- **THEN** it is available as `@red-hat-developer-hub/backstage-plugin-boost-toolscope`
 - **AND** the embedding cache (currently unbounded `Map<>`) is replaced with an injectable cache interface
 - **AND** the session cache (currently raw `Map<>` with 1h TTL, max 1000) uses the injected cache
 

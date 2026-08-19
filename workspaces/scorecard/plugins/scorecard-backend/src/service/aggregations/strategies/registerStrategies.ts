@@ -21,7 +21,8 @@ import {
 import type { AggregatedMetricLoader } from '../AggregatedMetricLoader';
 import type { AggregationStrategy } from './types';
 import { StatusGroupedAggregationStrategy } from './StatusGroupedAggregationStrategy';
-import { AverageAggregationStrategy } from './AverageAggregationStrategy';
+import { WeightedStatusScoreAggregationStrategy } from './WeightedStatusScoreAggregationStrategy';
+import { ScalarAggregationStrategy } from './ScalarAggregationStrategy';
 import { LoggerService } from '@backstage/backend-plugin-api';
 
 export function createAggregationStrategyRegistry(
@@ -33,6 +34,29 @@ export function createAggregationStrategyRegistry(
       aggregationTypes.statusGrouped,
       new StatusGroupedAggregationStrategy(loader),
     ],
-    [aggregationTypes.average, new AverageAggregationStrategy(loader, logger)],
+    [
+      aggregationTypes.weightedStatusScore,
+      new WeightedStatusScoreAggregationStrategy(loader, logger),
+    ],
+    [
+      aggregationTypes.sum,
+      new ScalarAggregationStrategy(loader, aggregationTypes.sum),
+    ],
+    [
+      aggregationTypes.average,
+      new ScalarAggregationStrategy(loader, aggregationTypes.average),
+    ],
+    [
+      aggregationTypes.max,
+      new ScalarAggregationStrategy(loader, aggregationTypes.max),
+    ],
+    [
+      aggregationTypes.min,
+      new ScalarAggregationStrategy(loader, aggregationTypes.min),
+    ],
+    [
+      aggregationTypes.count,
+      new ScalarAggregationStrategy(loader, aggregationTypes.count),
+    ],
   ]);
 }

@@ -24,7 +24,6 @@ import Scorecard from './Scorecard';
 import { useScorecards } from '../../hooks/useScorecards';
 import { getStatusConfig, resolveMetricTranslation } from '../../utils';
 import PermissionRequiredState from '../Common/PermissionRequiredState';
-import { ScorecardStylesProvider } from '../ScorecardStylesProvider';
 import { useTranslation } from '../../hooks/useTranslation';
 import { CardLoading } from '../Common/CardLoading';
 import { hasMetricDataError, hasThresholdError } from '../../utils/statusUtils';
@@ -50,10 +49,14 @@ const EntityScorecardContentInner = () => {
 
   return (
     <Box
-      display="flex"
-      flexWrap="wrap"
+      display="grid"
+      gridTemplateColumns={{
+        xs: '1fr',
+        sm: 'repeat(2, 1fr)',
+        lg: 'repeat(3, 1fr)',
+      }}
       gap={2}
-      sx={{ alignItems: 'flex-start' }}
+      sx={{ alignItems: 'start' }}
     >
       {scorecards?.map((metric: MetricResult) => {
         // Check if metric data unavailable
@@ -66,7 +69,7 @@ const EntityScorecardContentInner = () => {
           evaluation: metric.result?.thresholdResult?.evaluation,
           thresholdStatus: metric.result?.thresholdResult?.status,
           metricStatus: metric.status,
-          thresholdRules: metric.result.thresholdResult.definition?.rules,
+          thresholdRules: metric.result?.thresholdResult?.definition?.rules,
         });
 
         const title = resolveMetricTranslation(
@@ -92,6 +95,7 @@ const EntityScorecardContentInner = () => {
             value={metric.result?.value}
             metricType={metric.metadata.type}
             thresholds={metric.result?.thresholdResult}
+            unit={metric.metadata.unit}
             isMetricDataError={isMetricDataError}
             metricDataError={metric?.error}
             isThresholdError={isThresholdError}
@@ -103,8 +107,4 @@ const EntityScorecardContentInner = () => {
   );
 };
 
-export const EntityScorecardContent = () => (
-  <ScorecardStylesProvider>
-    <EntityScorecardContentInner />
-  </ScorecardStylesProvider>
-);
+export const EntityScorecardContent = () => <EntityScorecardContentInner />;

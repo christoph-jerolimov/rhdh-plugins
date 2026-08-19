@@ -1,5 +1,118 @@
 # @red-hat-developer-hub/backstage-plugin-orchestrator-form-widgets
 
+## 2.0.0
+
+### Major Changes
+
+- 2e4c46e: **BREAKING**: Graduated the New Frontend System (NFS) orchestrator plugins to stable API.
+
+  The NFS plugins (`createFrontendPlugin`) have been promoted from the `./alpha` subpath to the primary `.` entry point. Legacy (OFS) exports have been moved to the new `./legacy` subpath.
+
+  For `@red-hat-developer-hub/backstage-plugin-orchestrator`, the `./alpha` subpath now only exports translations. For `@red-hat-developer-hub/backstage-plugin-orchestrator-form-widgets`, the `./alpha` subpath has been removed.
+
+  **Migration for NFS consumers (previously using `./alpha`):**
+
+  ```diff
+  - import orchestratorPlugin, { orchestratorTranslationsModule } from '@red-hat-developer-hub/backstage-plugin-orchestrator/alpha';
+  - import orchestratorFormWidgetsPlugin from '@red-hat-developer-hub/backstage-plugin-orchestrator-form-widgets/alpha';
+  + import orchestratorPlugin, { orchestratorTranslationsModule } from '@red-hat-developer-hub/backstage-plugin-orchestrator';
+  + import orchestratorFormWidgetsPlugin from '@red-hat-developer-hub/backstage-plugin-orchestrator-form-widgets';
+  ```
+
+  **Migration for OFS consumers:**
+
+  ```diff
+  - import { OrchestratorPage, OrchestratorIcon } from '@red-hat-developer-hub/backstage-plugin-orchestrator';
+  - import { orchestratorFormWidgetsPlugin } from '@red-hat-developer-hub/backstage-plugin-orchestrator-form-widgets';
+  + import { OrchestratorPage, OrchestratorIcon } from '@red-hat-developer-hub/backstage-plugin-orchestrator/legacy';
+  + import { orchestratorFormWidgetsPlugin } from '@red-hat-developer-hub/backstage-plugin-orchestrator-form-widgets/legacy';
+  ```
+
+  **Migration for dynamic plugin configurations:**
+
+  Legacy exports require `module: Legacy` — they are not available on the default module.
+  OFS deployments must also load form-widgets via `pluginModule: Legacy` so RHDH registers the OFS `BackstagePlugin` (PluginRoot is now NFS).
+
+  ```yaml
+  dynamicPlugins:
+    frontend:
+      red-hat-developer-hub.backstage-plugin-orchestrator:
+        # Legacy exports require `module: Legacy`
+        dynamicRoutes:
+          - path: /orchestrator
+            importName: OrchestratorPage
+            module: Legacy
+      red-hat-developer-hub.backstage-plugin-orchestrator-form-widgets:
+        pluginModule: Legacy
+  ```
+
+### Minor Changes
+
+- a64f76d: Add field-level validation support via `ui:validateOn` and `ui:validateGroup` schema annotations. Fields can now trigger async validation on blur, change, or both without waiting for Next/Submit. Dependent fields sharing a `ui:validateGroup` are validated together once all group members have values.
+
+### Patch Changes
+
+- e0093e0: Remove unused `@janus-idp/backstage-plugin-audit-log-node` and `@janus-idp/cli` dependencies.
+- Updated dependencies [a64f76d]
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-form-api@2.10.0
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-form-react@2.11.0
+
+## 1.12.1
+
+### Patch Changes
+
+- f48dfb4: Add conditional RBAC policy support for orchestrator workflows using the `IS_ALLOWED_WORKFLOW_ID` rule. Dynamic workflow-specific permissions (`orchestrator.workflow.<workflowId>` and `orchestrator.workflow.use.<workflowId>`) are deprecated and will be removed in the next release.
+
+  Migrate from deprecated dynamic permissions to conditional policies. See `docs/MIGRATION-CONDITIONAL-POLICIES.md`.
+
+- e5788bb: Reduce NFS Module Federation sync size by lazy-loading heavy dependencies.
+- Updated dependencies [f48dfb4]
+- Updated dependencies [c74276c]
+- Updated dependencies [e0d0986]
+- Updated dependencies [8966faf]
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-common@3.9.0
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-form-api@2.9.1
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-form-react@2.10.1
+
+## 1.12.0
+
+### Minor Changes
+
+- 10f9b87: Backstage version bump to v1.52.0
+
+### Patch Changes
+
+- d2a0ba0: Updated dependency `jsonata` to `^2.2.0`.
+- Updated dependencies [5e0934d]
+- Updated dependencies [10f9b87]
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-form-react@2.10.0
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-common@3.8.0
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-form-api@2.9.0
+
+## 1.11.3
+
+### Patch Changes
+
+- eade824: update the header to be consistent with the code base.
+- ea8563b: Enable backward navigation in multi-step workflow forms by clicking completed stepper steps, while keeping the current and future steps display-only.
+- Updated dependencies [eade824]
+- Updated dependencies [ea8563b]
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-common@3.7.3
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-form-react@2.9.3
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-form-api@2.8.3
+
+## 1.11.2
+
+### Patch Changes
+
+- 19f7643: Clear async validation errors when the user edits a workflow form field after clicking Next. Only the changed field's error is removed; other field errors remain until that field is edited or the step is validated again. Also handle empty or non-JSON validation responses without breaking the form.
+- Updated dependencies [19f7643]
+- Updated dependencies [b2307f3]
+- Updated dependencies [e1a86f0]
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-form-react@2.9.2
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-common@3.7.2
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-form-api@2.8.2
+
 ## 1.11.1
 
 ### Patch Changes

@@ -30,7 +30,7 @@ export type AggregationType =
 export type AggregatedMetricValue = {
   count: number;
   name: string;
-  /** Present when the API includes per-status weights (e.g. average aggregation). */
+  /** Present when the API includes per-status weights (e.g. weightedStatusScore aggregation). */
   score?: number;
 };
 
@@ -57,24 +57,55 @@ export type AggregatedMetric = {
 /**
  * @public
  */
+export type ScalarAggregatedMetric = Omit<AggregatedMetric, 'values'> & {
+  value: number;
+};
+
+/**
+ * Optional filter applied to scalar aggregation KPIs.
+ * @public
+ */
+export type AggregationConfigFilter = {
+  status?: string;
+};
+
+/**
+ * @public
+ */
 export type AggregationMetadata = {
   title: string;
   description: string;
   type: MetricType;
+  unit?: string;
   history?: boolean;
   aggregationType: AggregationType;
+  filter?: AggregationConfigFilter;
 };
 
+/**
+ * @public
+ */
 export type StatusGroupedAggregationResult = Omit<
   AggregatedMetric,
   'values'
 > & { values: AggregatedMetricValue[]; thresholds: ThresholdConfig };
 
-export type AggregatedMetricAverageResult = StatusGroupedAggregationResult & {
-  averageScore: number;
-  averageWeightedSum: number;
-  averageMaxPossible: number;
-  aggregationChartDisplayColor: string;
+/**
+ * @public
+ */
+export type WeightedStatusScoreAggregationResult =
+  StatusGroupedAggregationResult & {
+    weightedStatusScore: number;
+    weightedStatusSum: number;
+    weightedStatusMaxPossible: number;
+    aggregationChartDisplayColor: string;
+  };
+
+/**
+ * @public
+ */
+export type ScalarAggregationResult = ScalarAggregatedMetric & {
+  thresholds: ThresholdConfig;
 };
 
 /**
@@ -82,7 +113,8 @@ export type AggregatedMetricAverageResult = StatusGroupedAggregationResult & {
  */
 export type AggregationResultByType =
   | StatusGroupedAggregationResult
-  | AggregatedMetricAverageResult;
+  | WeightedStatusScoreAggregationResult
+  | ScalarAggregationResult;
 
 /**
  * @public
@@ -97,8 +129,13 @@ export type AggregatedMetricResult = {
 /**
  * @public
  */
+export type StatusScoreAggregationOption = Record<string, number>;
+
+/**
+ * @public
+ */
 export type AggregationConfigOptions = {
-  statusScores: Record<string, number>;
+  statusScores?: StatusScoreAggregationOption;
   thresholds?: ThresholdConfig;
 };
 
@@ -111,5 +148,6 @@ export type AggregationConfig = {
   description: string;
   type: AggregationType;
   metricId: string;
+  filter?: AggregationConfigFilter;
   options?: AggregationConfigOptions;
 };

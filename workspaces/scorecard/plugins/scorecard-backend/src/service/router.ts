@@ -36,6 +36,7 @@ import {
 } from '../permissions/permissionUtils';
 import { stringifyEntityRef } from '@backstage/catalog-model';
 import { validateMetricIdsQueryParams } from '../middlewares/validateMetricIdsQueryParams';
+import { validateTimeSeriesQueryParams } from '../middlewares/validateTimeSeriesQueryParams';
 import { getEntitiesOwnedByUser } from '../utils/getEntitiesOwnedByUser';
 import { parseCommaSeparatedString } from '../utils/parseCommaSeparatedString';
 import { AggregatedMetricMapper } from './mappers';
@@ -43,7 +44,7 @@ import { validateDrillDownMetricsSchema } from '../validation/validateDrillDownM
 import { validateAggregationIdParam } from '../middlewares/validateAggregationIdParam';
 import { scorecardMetricReadPermission } from '@red-hat-developer-hub/backstage-plugin-scorecard-common';
 import { validateDatasourceQueryParams } from '../middlewares/validateDatasourceQueryParams';
-import { AggregationsService } from './aggregations/AggregationService';
+import { AggregationsService } from './aggregations/AggregationsService';
 import { ThresholdResolver } from '../threshold/ThresholdResolver';
 
 export type ScorecardRouterOptions = {
@@ -136,6 +137,34 @@ export async function createRouter({
     },
   );
 
+  router.get(
+    '/metrics/catalog/:kind/:namespace/:name/time-series',
+    validateTimeSeriesQueryParams,
+    async (req, res) => {
+      const { metricId, from, to } = req.query;
+
+      const { conditions } = await authorizeConditional(
+        await httpAuth.credentials(req),
+        permissions,
+        scorecardMetricReadPermission,
+      );
+
+      const { kind, namespace, name } = req.params;
+      const entityRef = stringifyEntityRef({ kind, namespace, name });
+
+      await checkEntityAccess(entityRef, req, permissions, httpAuth);
+
+      const result = await catalogMetricService.getEntityMetricTimeSeries(
+        entityRef,
+        metricId as string,
+        new Date(from as string),
+        new Date(to as string),
+        conditions,
+      );
+      res.json(result);
+    },
+  );
+
   // Deprecated (RFC 8594): use GET /aggregations/:aggregationId instead.
   router.get(
     '/metrics/:metricId/catalog/aggregations',
@@ -157,7 +186,6 @@ export async function createRouter({
         scorecardMetricReadPermission,
       );
 
-      const provider = metricProvidersRegistry.getProvider(metricId);
       const metric = metricProvidersRegistry.getMetric(metricId);
       const authorizedMetrics = filterAuthorizedMetrics([metric], conditions);
 
@@ -183,14 +211,16 @@ export async function createRouter({
         await checkEntityAccess(entityRef, req, permissions, httpAuth);
       }
 
-      const thresholds = thresholdResolver.resolveProviderThresholds(provider);
+      const thresholds = thresholdResolver.resolveMetricThresholds(metric);
 
       logger.warn(
         `Deprecated Scorecard API: GET /metrics/${metricId}/catalog/aggregations is deprecated; use GET /aggregations/:aggregationId (e.g. when the aggregation id matches the metric id, GET /aggregations/${metricId}).`,
       );
 
-      const aggregationConfig =
-        aggregationsService.getAggregationConfig(metricId);
+      const aggregationConfig = aggregationsService.getAggregationConfig(
+        metricId,
+        metricProvidersRegistry,
+      );
 
       res.json(
         await aggregationsService.getAggregatedMetricByEntityRefs({
@@ -279,14 +309,13 @@ export async function createRouter({
 
       const userEntityRef = await getUserEntityRef(credentials);
 
-      const aggregationConfig =
-        aggregationsService.getAggregationConfig(aggregationId);
-
-      const provider = metricProvidersRegistry.getProvider(
-        aggregationConfig.metricId,
+      const aggregationConfig = aggregationsService.getAggregationConfig(
+        aggregationId,
+        metricProvidersRegistry,
       );
+
       const metric = metricProvidersRegistry.getMetric(
-        aggregationConfig?.metricId ?? aggregationId,
+        aggregationConfig.metricId,
       );
 
       const entitiesOwnedByAUser = await getEntitiesOwnedByUser(userEntityRef, {
@@ -305,7 +334,7 @@ export async function createRouter({
         );
       }
 
-      const thresholds = thresholdResolver.resolveProviderThresholds(provider);
+      const thresholds = thresholdResolver.resolveMetricThresholds(metric);
 
       res.json(
         await aggregationsService.getAggregatedMetricByEntityRefs({
@@ -324,11 +353,13 @@ export async function createRouter({
     async (req, res) => {
       const { aggregationId } = req.params;
 
-      const aggregationConfig =
-        aggregationsService.getAggregationConfig(aggregationId);
+      const aggregationConfig = aggregationsService.getAggregationConfig(
+        aggregationId,
+        metricProvidersRegistry,
+      );
 
       const metric = metricProvidersRegistry.getMetric(
-        aggregationConfig?.metricId ?? aggregationId,
+        aggregationConfig.metricId,
       );
 
       res.json(

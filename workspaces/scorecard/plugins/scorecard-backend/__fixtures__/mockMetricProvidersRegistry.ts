@@ -21,9 +21,8 @@ import { Metric } from '@red-hat-developer-hub/backstage-plugin-scorecard-common
 export const mockMetricProvidersRegistry = {
   register: jest.fn(),
   getProvider: jest.fn(),
+  hasProvider: jest.fn(),
   getMetric: jest.fn(),
-  calculateMetric: jest.fn(),
-  calculateMetrics: jest.fn(),
   listProviders: jest.fn().mockReturnValue([]),
   listMetrics: jest.fn().mockReturnValue([]),
   listMetricsByDatasource: jest.fn().mockReturnValue([]),
@@ -41,6 +40,9 @@ export const buildMockMetricProvidersRegistry = ({
   const getProvider = provider
     ? jest.fn().mockReturnValue(provider)
     : jest.fn();
+  const listProviders = provider
+    ? jest.fn().mockReturnValue([provider])
+    : jest.fn().mockReturnValue([]);
   const listMetrics = metricsList
     ? jest.fn().mockImplementation((metricIds?: string[]) => {
         if (metricIds && metricIds.length !== 0) {
@@ -49,16 +51,14 @@ export const buildMockMetricProvidersRegistry = ({
         return metricsList;
       })
     : jest.fn();
+  const hasProvider = provider ? jest.fn().mockReturnValue(true) : jest.fn();
   const getMetric =
     provider || metricsList
       ? jest.fn().mockImplementation((metricId: string) => {
-          if (provider?.getMetrics) {
+          if (provider) {
             const found = provider.getMetrics().find(m => m.id === metricId);
             if (found) return found;
           }
-
-          const pMetric = provider?.getMetric();
-          if (pMetric && pMetric.id === metricId) return pMetric;
 
           if (metricsList) {
             const found = metricsList.find(m => m.id === metricId);
@@ -72,7 +72,9 @@ export const buildMockMetricProvidersRegistry = ({
   return {
     ...mockMetricProvidersRegistry,
     getProvider,
+    hasProvider,
     getMetric,
     listMetrics,
+    listProviders,
   } as unknown as jest.Mocked<MetricProvidersRegistry>;
 };

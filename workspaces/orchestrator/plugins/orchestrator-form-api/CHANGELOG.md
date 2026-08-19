@@ -1,5 +1,47 @@
 # @red-hat-developer-hub/backstage-plugin-orchestrator-form-api
 
+## 2.10.0
+
+### Minor Changes
+
+- a64f76d: Add field-level validation support via `ui:validateOn` and `ui:validateGroup` schema annotations. Fields can now trigger async validation on blur, change, or both without waiting for Next/Submit. Dependent fields sharing a `ui:validateGroup` are validated together once all group members have values.
+
+## 2.9.1
+
+### Patch Changes
+
+- e0d0986: Updated dependency `prettier` to `3.9.6`.
+- 8966faf: Updated dependency `prettier` to `3.9.5`.
+- Updated dependencies [f48dfb4]
+- Updated dependencies [c74276c]
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-common@3.9.0
+
+## 2.9.0
+
+### Minor Changes
+
+- 10f9b87: Backstage version bump to v1.52.0
+
+### Patch Changes
+
+- Updated dependencies [10f9b87]
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-common@3.8.0
+
+## 2.8.3
+
+### Patch Changes
+
+- Updated dependencies [eade824]
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-common@3.7.3
+
+## 2.8.2
+
+### Patch Changes
+
+- Updated dependencies [b2307f3]
+- Updated dependencies [e1a86f0]
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-common@3.7.2
+
 ## 2.8.1
 
 ### Patch Changes

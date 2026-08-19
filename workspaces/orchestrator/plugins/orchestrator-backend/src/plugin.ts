@@ -18,14 +18,24 @@ import {
   coreServices,
   createBackendPlugin,
 } from '@backstage/backend-plugin-api';
+import { actionsRegistryServiceRef } from '@backstage/backend-plugin-api/alpha';
+import { createConditionTransformer } from '@backstage/plugin-permission-node';
 
+import { orchestratorPermissions } from '@red-hat-developer-hub/backstage-plugin-orchestrator-common';
 import {
   WorkflowLogProvider,
   workflowLogsExtensionEndpoint,
 } from '@red-hat-developer-hub/backstage-plugin-orchestrator-node';
 
+import { createOrchestratorActions } from './actions';
 import { WorkflowLogsProvidersRegistry } from './providers/WorkflowLogsProvidersRegistry';
 import { createRouter } from './routerWrapper';
+import { initPublicServices } from './service/initPublicServices';
+import {
+  fetchWorkflowResources,
+  orchestratorPermissionRules,
+  orchestratorWorkflowResourceRef,
+} from './service/permission-rules';
 
 /**
  * @public
@@ -53,16 +63,62 @@ export const orchestratorPlugin = createBackendPlugin({
         discovery: coreServices.discovery,
         urlReader: coreServices.urlReader,
         permissions: coreServices.permissions,
+        permissionsRegistry: coreServices.permissionsRegistry,
         scheduler: coreServices.scheduler,
         httpAuth: coreServices.httpAuth,
         http: coreServices.httpRouter,
         userInfo: coreServices.userInfo,
+        actionsRegistry: actionsRegistryServiceRef,
       },
       async init(props) {
-        const { http } = props;
+        const {
+          http,
+          permissionsRegistry,
+          actionsRegistry,
+          permissions,
+          userInfo,
+        } = props;
+
+        const publicServices = initPublicServices(
+          props.logger,
+          props.config,
+          props.scheduler,
+          workflowLogsProvidersRegistry,
+        );
+
+        permissionsRegistry.addResourceType({
+          resourceRef: orchestratorWorkflowResourceRef,
+          getResources: resourceRefs =>
+            fetchWorkflowResources(
+              publicServices.orchestratorService,
+              resourceRefs,
+            ),
+          permissions: orchestratorPermissions,
+          rules: orchestratorPermissionRules,
+        });
+
+        // Constructed once and shared by both the HTTP router
+        // (`createRouter` below) and the MCP actions, mirroring
+        // `service/router.ts`'s own construction from the same ruleset.
+        const conditionTransformer = createConditionTransformer(
+          permissionsRegistry.getPermissionRuleset(
+            orchestratorWorkflowResourceRef,
+          ),
+        );
+
+        createOrchestratorActions({
+          actionsRegistry,
+          permissions,
+          userInfo,
+          orchestratorService: publicServices.orchestratorService,
+          conditionTransformer,
+          logger: props.logger,
+        });
+
         const router = await createRouter({
           ...props,
           workflowLogsProvidersRegistry,
+          publicServices,
         });
         http.use(router);
         http.addAuthPolicy({

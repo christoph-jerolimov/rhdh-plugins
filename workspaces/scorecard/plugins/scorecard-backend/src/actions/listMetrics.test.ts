@@ -38,16 +38,18 @@ describe('createListMetricsAction', () => {
 
     const metrics = [
       {
-        id: 'github.open_prs',
+        id: 'github.openPRs',
         title: 'Open PRs',
         description: 'Number of open pull requests',
         type: 'number' as const,
+        defaultVisualization: 'sparkline' as const,
       },
       {
         id: 'sonarqube.coverage',
         title: 'Code Coverage',
         description: 'Test coverage percentage',
         type: 'number' as const,
+        defaultVisualization: 'value' as const,
       },
     ];
     (mockRegistry.listMetrics as jest.Mock).mockReturnValue(metrics);
@@ -95,7 +97,7 @@ describe('createListMetricsAction', () => {
     const conditions = {
       rule: 'HAS_METRIC_ID',
       resourceType: 'scorecard-metric',
-      params: { metricIds: ['github.open_prs'] },
+      params: { metricIds: ['github.openPRs'] },
     };
     mockPermissions.authorizeConditional.mockResolvedValue([
       {
@@ -108,7 +110,7 @@ describe('createListMetricsAction', () => {
 
     const allMetrics = [
       {
-        id: 'github.open_prs',
+        id: 'github.openPRs',
         title: 'Open PRs',
         description: 'Number of open pull requests',
         type: 'number' as const,

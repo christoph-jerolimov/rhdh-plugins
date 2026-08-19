@@ -99,24 +99,44 @@ export interface Config {
     kagenti?: {
       /** Authentication configuration. */
       auth?: {
-        /** RFC 8693 token exchange. */
-        tokenExchange?: {
-          /**
-           * Enable RFC 8693 token exchange for Kagenti.
-           * @configScope yaml-only
-           */
-          enabled?: boolean;
-          /**
-           * Target audience for exchanged token.
-           * @configScope yaml-only
-           */
-          audience?: string;
-          /**
-           * Header containing user OIDC token.
-           * @configScope yaml-only
-           */
-          userTokenHeader?: string;
-        };
+        /**
+         * Keycloak token endpoint URL for OAuth2 Client Credentials Grant.
+         * @configScope yaml-only
+         */
+        tokenEndpoint?: string;
+        /**
+         * OAuth2 client ID for service-account authentication.
+         * @configScope yaml-only
+         */
+        clientId?: string;
+        /**
+         * OAuth2 client secret for service-account authentication.
+         * @visibility secret
+         * @configScope yaml-only
+         */
+        clientSecret?: string;
+        /**
+         * Seconds before token expiry to proactively refresh.
+         * @configScope yaml-only
+         */
+        tokenExpiryBufferSeconds?: number;
+      };
+    };
+
+    /** AI provider connection settings. */
+    providers?: {
+      /** Kagenti A2A provider connection. */
+      kagenti?: {
+        /**
+         * Base URL for the Kagenti A2A endpoint.
+         * @configScope yaml-only
+         */
+        baseUrl?: string;
+        /**
+         * Default agent ID for task routing.
+         * @configScope yaml-only
+         */
+        defaultAgent?: string;
       };
     };
 
@@ -136,5 +156,142 @@ export interface Config {
      * @visibility secret
      */
     encryptionSecret?: string;
+
+    /** Ingestion health and sync-attempt retention. */
+    ingestion?: {
+      healthRetention?: {
+        /**
+         * Maximum sync attempts retained per connector (default: 100).
+         * @configScope yaml-only
+         */
+        maxAttemptsPerConnector?: number;
+      };
+    };
+
+    /**
+     * Runtime connector sync settings (db-overridable).
+     * Distinct from `ai-catalog.providers.<id>.enabled` (startup registration).
+     */
+    connectors?: {
+      /** Jira connector runtime configuration. */
+      jira?: {
+        /**
+         * Whether Jira runtime syncing is enabled (default: true).
+         * @configScope db-overridable
+         */
+        enabled?: boolean;
+        /**
+         * HTTPS endpoint URL for the Jira instance.
+         * @configScope db-overridable
+         */
+        endpoint?: string;
+        /** Jira sync schedule configuration. */
+        schedule?: {
+          /**
+           * Sync interval in milliseconds (default: 300000).
+           * @configScope db-overridable
+           */
+          intervalMs?: number;
+          /**
+           * Standard 5-field cron expression for sync schedule.
+           * @configScope db-overridable
+           */
+          cron?: string;
+        };
+        /**
+         * Number of items per sync batch (default: 100).
+         * @configScope db-overridable
+         */
+        batchSize?: number;
+        /** Jira timeout configuration. */
+        timeout?: {
+          /**
+           * Connection timeout in milliseconds (default: 30000).
+           * @configScope db-overridable
+           */
+          connectionMs?: number;
+        };
+        /**
+         * Per-connector schema version (internal metadata).
+         * @configScope db-only
+         */
+        __schemaVersion?: number;
+      };
+      /** GitHub connector runtime configuration. */
+      github?: {
+        /**
+         * Whether GitHub runtime syncing is enabled (default: true).
+         * @configScope db-overridable
+         */
+        enabled?: boolean;
+        /**
+         * HTTPS endpoint URL for the GitHub API.
+         * @configScope db-overridable
+         */
+        endpoint?: string;
+        /** GitHub sync schedule configuration. */
+        schedule?: {
+          /**
+           * Sync interval in milliseconds (default: 300000).
+           * @configScope db-overridable
+           */
+          intervalMs?: number;
+        };
+        /**
+         * Number of items per sync batch (default: 100).
+         * @configScope db-overridable
+         */
+        batchSize?: number;
+        /**
+         * Per-connector schema version (internal metadata).
+         * @configScope db-only
+         */
+        __schemaVersion?: number;
+      };
+      /** GitLab connector runtime configuration. */
+      gitlab?: {
+        /**
+         * Whether GitLab runtime syncing is enabled (default: true).
+         * @configScope db-overridable
+         */
+        enabled?: boolean;
+        /**
+         * HTTPS endpoint URL for the GitLab API.
+         * @configScope db-overridable
+         */
+        endpoint?: string;
+        /** GitLab sync schedule configuration. */
+        schedule?: {
+          /**
+           * Sync interval in milliseconds (default: 300000).
+           * @configScope db-overridable
+           */
+          intervalMs?: number;
+        };
+        /**
+         * Number of items per sync batch (default: 100).
+         * @configScope db-overridable
+         */
+        batchSize?: number;
+        /**
+         * Per-connector schema version (internal metadata).
+         * @configScope db-only
+         */
+        __schemaVersion?: number;
+      };
+      /**
+       * Open index signature preserving backward compatibility.
+       * Allows arbitrary connector IDs beyond the three typed entries.
+       */
+      [connectorId: string]:
+        | {
+            /**
+             * Whether runtime syncing is enabled (default: true).
+             * @configScope db-overridable
+             */
+            enabled?: boolean;
+          }
+        | undefined;
+    };
   };
 }

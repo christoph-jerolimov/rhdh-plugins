@@ -53,6 +53,7 @@ interface ScorecardProps {
   value: MetricValue | null;
   metricType: MetricType;
   thresholds?: ThresholdResult;
+  unit?: string;
   isMetricDataError?: boolean;
   metricDataError?: string;
   isThresholdError?: boolean;
@@ -175,6 +176,7 @@ const Scorecard = ({
   value,
   metricType,
   thresholds,
+  unit,
   isMetricDataError = false,
   metricDataError,
   isThresholdError = false,
@@ -198,7 +200,7 @@ const Scorecard = ({
       role="article"
       title={cardTitle}
       description={description}
-      width="371px"
+      width="100%"
     >
       <Box
         width="100%"
@@ -227,7 +229,7 @@ const Scorecard = ({
             {isErrorState && (
               <g>
                 <circle
-                  cx="22%"
+                  cx={82}
                   cy="50%"
                   r={74}
                   fill="transparent"
@@ -248,7 +250,7 @@ const Scorecard = ({
               data={pieData}
               dataKey="value"
               nameKey="name"
-              cx="22%"
+              cx={82}
               cy="50%"
               innerRadius={64}
               outerRadius={74}
@@ -317,7 +319,7 @@ const Scorecard = ({
                 height: '76px',
               }}
               content={props => (
-                <CustomLegend {...props} thresholds={thresholds} />
+                <CustomLegend {...props} thresholds={thresholds} unit={unit} />
               )}
             />
 
