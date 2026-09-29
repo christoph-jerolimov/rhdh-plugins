@@ -22,7 +22,6 @@ import {
   IconComponent,
   useTranslationRef,
 } from '@backstage/frontend-plugin-api';
-import { catalogTranslationRef } from '@backstage/plugin-catalog';
 import type { EntityContextMenuItemData } from '@backstage/plugin-catalog-react/alpha';
 import {
   ButtonIcon,
@@ -32,6 +31,7 @@ import {
   MenuTrigger,
 } from '@backstage/ui';
 import { RiMore2Line } from '@remixicon/react';
+import { appReactTranslationRef } from '../../translations/ref';
 
 /**
  * `EntityContextMenuItemDataWithNode` copy from `@backstage/plugin-catalog`, because its not exported.
@@ -100,14 +100,14 @@ export function EntityContextMenu(props: {
   contextMenuItems?: EntityContextMenuItemDataWithNode[];
 }) {
   const { UNSTABLE_extraContextMenuItems, contextMenuItems } = props;
-  const { t } = useTranslationRef(catalogTranslationRef);
+  const { t } = useTranslationRef(appReactTranslationRef);
 
   return (
     <MenuTrigger>
       <ButtonIcon
         variant="secondary"
         icon={<RiMore2Line />}
-        aria-label={t('entityContextMenu.moreButtonAriaLabel')}
+        aria-label={t('catalog.entityHeader.moreActions')}
       />
       <Menu placement="bottom end">
         {UNSTABLE_extraContextMenuItems?.map((item, index) => (

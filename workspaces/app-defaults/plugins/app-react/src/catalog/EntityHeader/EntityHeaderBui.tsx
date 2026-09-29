@@ -36,10 +36,8 @@ import {
 } from '@backstage/catalog-model';
 import { useApi, useRouteRefParams } from '@backstage/core-plugin-api';
 import { useTranslationRef } from '@backstage/core-plugin-api/alpha';
-import { catalogTranslationRef } from '@backstage/plugin-catalog';
 import {
   catalogApiRef,
-  catalogReactTranslationRef,
   entityRouteRef,
   getEntityRelations,
   useAsyncEntity,
@@ -53,6 +51,7 @@ import {
   EntityContextMenu,
   type EntityContextMenuItemDataWithNode,
 } from '../EntityContextMenu/EntityContextMenu';
+import { appReactTranslationRef } from '../../translations/ref';
 
 function useOwnerUsers(entity: Entity | undefined): HeaderMetadataUser[] {
   const catalogApi = useApi(catalogApiRef);
@@ -124,20 +123,20 @@ function hierarchyLabel(
 
 function useMetadata(entity: Entity | undefined): HeaderMetadataItem[] {
   const owners = useOwnerUsers(entity);
-  const { t } = useTranslationRef(catalogTranslationRef);
+  const { t } = useTranslationRef(appReactTranslationRef);
   return useMemo(() => {
     if (!entity) return [];
     const metadata: HeaderMetadataItem[] = [];
     const lifecycle = entity.spec?.lifecycle?.toString();
     if (lifecycle) {
       metadata.push({
-        label: t('entityLabels.lifecycleLabel'),
+        label: t('catalog.entityHeader.lifecycleLabel'),
         value: lifecycle,
       });
     }
     if (owners.length > 0) {
       metadata.push({
-        label: t('entityLabels.ownerLabel'),
+        label: t('catalog.entityHeader.ownerLabel'),
         value: <HeaderMetadataUsers users={owners} />,
       });
     }
@@ -153,10 +152,10 @@ function useMetadata(entity: Entity | undefined): HeaderMetadataItem[] {
     for (const [label, refs] of Object.entries(hierarchy)) {
       metadata.push({
         label: t(
-          `entityLabels.${label}` as
-            | 'entityLabels.systemLabel'
-            | 'entityLabels.domainLabel'
-            | 'entityLabels.partOfLabel',
+          `catalog.entityHeader.${label}` as
+            | 'catalog.entityHeader.systemLabel'
+            | 'catalog.entityHeader.domainLabel'
+            | 'catalog.entityHeader.partOfLabel',
         ),
         value: <HierarchyLinks refs={refs} />,
       });
@@ -165,8 +164,27 @@ function useMetadata(entity: Entity | undefined): HeaderMetadataItem[] {
   }, [entity, owners, t]);
 }
 
+/**
+ * Translates an entity kind under the `catalog.entityKinds.<kind>` key, where
+ * the key is the kind as written in the entity (e.g. `Component`). Kinds
+ * without a matching translation fall back to the original value.
+ */
+function useTranslateKind(): (kind: string) => string {
+  const { t } = useTranslationRef(appReactTranslationRef);
+  const translateKind = t as unknown as (
+    key: string,
+    options: { defaultValue: string },
+  ) => string;
+  // i18next uses `.` as its key separator, so any dot is replaced with `_` to
+  // keep the whole kind as a single key.
+  return (kind: string) =>
+    translateKind(`catalog.entityKinds.${kind.replaceAll('.', '_')}`, {
+      defaultValue: kind,
+    });
+}
+
 function FavoriteEntityButton(props: { entity: Entity }) {
-  const { t } = useTranslationRef(catalogReactTranslationRef);
+  const { t } = useTranslationRef(appReactTranslationRef);
   const { isStarredEntity, toggleStarredEntity } = useStarredEntity(
     props.entity,
   );
@@ -175,8 +193,8 @@ function FavoriteEntityButton(props: { entity: Entity }) {
       variant="secondary"
       aria-label={
         isStarredEntity
-          ? t('favoriteEntity.removeFromFavorites')
-          : t('favoriteEntity.addToFavorites')
+          ? t('catalog.entityHeader.removeFromFavorites')
+          : t('catalog.entityHeader.addToFavorites')
       }
       icon={isStarredEntity ? <RiStarFill /> : <RiStarLine />}
       onPress={() => toggleStarredEntity()}
@@ -197,13 +215,15 @@ export function EntityHeaderBui(props: {
   const routeParams = useRouteRefParams(entityRouteRef);
   const presentation = useEntityPresentation(entity ?? routeParams);
   const metadata = useMetadata(entity);
+  const translateKind = useTranslateKind();
+  const kind = entity?.kind ?? routeParams.kind;
   const type = entity?.spec?.type?.toString();
 
   return (
     <Header
       title={presentation.primaryTitle}
       tags={[
-        { label: entity?.kind ?? routeParams.kind },
+        { label: translateKind(kind) },
         ...(type ? [{ label: type }] : []),
       ]}
       metadata={metadata}

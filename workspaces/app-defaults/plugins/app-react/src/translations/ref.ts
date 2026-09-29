@@ -17,8 +17,8 @@
 import { createTranslationRef } from '@backstage/frontend-plugin-api';
 
 /**
- * Translation ref for the catalog entity page tab and group titles rendered by
- * the localized entity header layout. Keyed by the English title so titles can
+ * Translation ref for the catalog entity page header (labels, entity kinds and
+ * the tab and group titles rendered by the localized entity header layout). Keyed by the English title so titles can
  * be looked up dynamically (see `LocalizedEntityHeaderLayout` in
  * `@red-hat-developer-hub/backstage-plugin-app-defaults`).
  *
@@ -47,6 +47,31 @@ export const appReactTranslationRef = createTranslationRef({
       Plugins: 'Plugins',
     },
     catalog: {
+      // Labels rendered by the catalog entity page header (`EntityHeaderBui`).
+      entityHeader: {
+        lifecycleLabel: 'Lifecycle',
+        ownerLabel: 'Owner',
+        systemLabel: 'System',
+        domainLabel: 'Domain',
+        partOfLabel: 'Part of',
+        addToFavorites: 'Add to favorites',
+        removeFromFavorites: 'Remove from favorites',
+        moreActions: 'More actions',
+      },
+      // Entity kinds shown as a tag in the catalog entity page header, keyed by
+      // the kind as written in the entity. Kinds without a matching entry fall
+      // through to their original value.
+      entityKinds: {
+        API: 'API',
+        Component: 'Component',
+        Domain: 'Domain',
+        Group: 'Group',
+        Location: 'Location',
+        Resource: 'Resource',
+        System: 'System',
+        Template: 'Template',
+        User: 'User',
+      },
       // Catalog entity page group titles, keyed by the English group title.
       entityTabGroups: {
         Overview: 'Overview',
