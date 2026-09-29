@@ -34,6 +34,8 @@ import { EntityContentBlueprint } from '@backstage/plugin-catalog-react/alpha';
 
 import { unstable_ClassNameGenerator as ClassNameGenerator } from '@mui/material/className';
 
+import { SidebarItemBlueprint } from '@red-hat-developer-hub/backstage-plugin-app-react';
+
 import { orchestratorApiRef, OrchestratorClient } from './api';
 import OrchestratorIcon from './components/OrchestratorIcon';
 import {
@@ -53,7 +55,11 @@ ClassNameGenerator.configure(componentName => {
     : `v5-${componentName}`;
 });
 
-const orchestratorPage = PageBlueprint.make({
+/**
+ * Orchestrator page extension for the new frontend system.
+ * @public
+ */
+export const orchestratorPage = PageBlueprint.make({
   params: {
     path: '/orchestrator',
     routeRef: orchestratorRootRouteRef,
@@ -64,7 +70,24 @@ const orchestratorPage = PageBlueprint.make({
   },
 });
 
-const orchestratorApi = ApiBlueprint.make({
+/**
+ * Orchestrator page extension for the new frontend system.
+ * @public
+ */
+export const orchestratorSidebarItem = SidebarItemBlueprint.make({
+  params: {
+    title: 'Orchestrator',
+    to: '/orchestrator',
+    group: 'admin',
+    requiresRoute: true,
+  },
+});
+
+/**
+ * Orchestrator API extension for the new frontend system.
+ * @public
+ */
+export const orchestratorApi = ApiBlueprint.make({
   params: defineParams =>
     defineParams(
       createApiFactory({
@@ -90,7 +113,11 @@ const isOrchestratorCatalogTabAvailable = (entity: {
   metadata?: { annotations?: Record<string, string> };
 }) => Boolean(entity.metadata?.annotations?.['orchestrator.io/workflows']);
 
-const orchestratorEntityContent = EntityContentBlueprint.make({
+/**
+ * Workflows entity content extension for the catalog.
+ * @public
+ */
+export const orchestratorEntityContent = EntityContentBlueprint.make({
   name: 'workflows',
   params: {
     path: '/workflows',
@@ -116,7 +143,12 @@ const orchestratorTranslation = TranslationBlueprint.make({
  */
 export default createFrontendPlugin({
   pluginId: 'orchestrator',
-  extensions: [orchestratorPage, orchestratorApi, orchestratorEntityContent],
+  extensions: [
+    orchestratorPage,
+    orchestratorSidebarItem,
+    orchestratorApi,
+    orchestratorEntityContent,
+  ],
   routes: {
     root: orchestratorRootRouteRef,
     workflow: workflowRouteRef,
@@ -141,6 +173,8 @@ export const orchestratorTranslationsModule = createFrontendModule({
   pluginId: 'app',
   extensions: [orchestratorTranslation],
 });
+
+export { orchestratorTemplateCardModule } from './templateCard';
 
 export {
   orchestratorTranslationRef,

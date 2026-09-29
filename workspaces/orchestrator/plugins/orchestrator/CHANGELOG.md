@@ -1,5 +1,66 @@
 # @red-hat-developer-hub/backstage-plugin-orchestrator
 
+## 6.2.4
+
+### Patch Changes
+
+- 40735a7: Add an Orchestrator sidebar item via `SidebarItemBlueprint` and rely on app-defaults navigation instead of a custom nav module in the NFS app and plugin playground.
+
+## 6.2.3
+
+### Patch Changes
+
+- f5f0d02: Updated translations for RHDH 2.1 (s3297).
+
+## 6.2.2
+
+### Patch Changes
+
+- 2bebbeb: Updated dependency `prettier` to `3.9.8`.
+- 22ab37c: Updated dependency `prettier` to `3.9.7`.
+- Updated dependencies [2bebbeb]
+- Updated dependencies [22ab37c]
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-form-api@2.11.2
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-form-react@2.12.2
+
+## 6.2.1
+
+### Patch Changes
+
+- 99d7b85: Updated the workflow instance Inputs card to use the same nested rendering format.
+
+## 6.2.0
+
+### Minor Changes
+
+- 089172b: Disable the scaffolder Choose button for unavailable orchestrator workflow templates via the app-defaults TemplateCard action extension.
+
+### Patch Changes
+
+- 47fdead: Remove unused dependencies and declare imports that were previously unlisted.
+- Updated dependencies [47fdead]
+- Updated dependencies [213b75e]
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-common@3.11.0
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-form-api@2.11.1
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-form-react@2.12.1
+
+## 6.1.0
+
+### Minor Changes
+
+- 279803c: Backstage version bump to v1.54.6
+
+### Patch Changes
+
+- 99da62c: Fix All Runs table column order resetting to default after sorting. Dragged column positions are now preserved across sort and data refetch operations.
+- 1e3a2fb: Fix Orchestrator empty state layout on wide viewports by targeting MuiGrid selectors instead of deprecated BackstageEmptyState class names.
+- c7f1b5d: trim unused production exports and dead symbols
+- 8e9abb8: Export named NFS extensions and add a Recipe A test so an unattached Workflows blueprint cannot pass silently.
+- Updated dependencies [279803c]
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-common@3.10.0
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-form-api@2.11.0
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-form-react@2.12.0
+
 ## 6.0.0
 
 ### Major Changes

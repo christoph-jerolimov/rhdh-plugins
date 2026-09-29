@@ -1,5 +1,50 @@
 # @red-hat-developer-hub/backstage-plugin-intelligent-assistant-common
 
+## 5.3.3
+
+## 5.3.2
+
+## 5.3.1
+
+## 5.3.0
+
+### Patch Changes
+
+- 2bebbeb: Updated dependency `prettier` to `3.9.8`.
+- 22ab37c: Updated dependency `prettier` to `3.9.7`.
+
+## 5.2.0
+
+## 5.1.0
+
+## 5.0.2
+
+## 5.0.1
+
+### Patch Changes
+
+- fe51be2: Backstage version bump to v1.54.6
+
+## 5.0.0
+
+### Major Changes
+
+- 5741af9: Consolidate Intelligent Assistant RBAC permissions into four feature-linked sets: `intelligent-assistant.chat`, `intelligent-assistant.notebooks`, `intelligent-assistant.mcp.tools`, and `intelligent-assistant.skills`. Update backend routes, frontend permission checks, example RBAC policies, and documentation to use the new permission names and exported constants.
+
+## 4.3.0
+
+## 4.2.0
+
+### Minor Changes
+
+- 5238698: Backstage version bump to v1.54.5
+
+## 4.1.0
+
+### Minor Changes
+
+- 6c8f76d: Removed public `iaSavedPromptsManagePermission` from the common package. Saved-prompts backend routes now require `intelligent-assistant.chat.use`. Operators should drop `intelligent-assistant.saved-prompts.manage` from RBAC CSVs; `chat.use` is enough.
+
 ## 4.0.0
 
 ### Major Changes
@@ -100,6 +145,10 @@
 ## 2.9.1
 
 ## 2.9.0
+
+## 2.8.7
+
+## 2.8.6
 
 ## 2.8.5
 

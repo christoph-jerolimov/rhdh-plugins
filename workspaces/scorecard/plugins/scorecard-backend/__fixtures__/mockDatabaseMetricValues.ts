@@ -33,10 +33,11 @@ type BuildMockDatabaseMetricValuesParams = {
 export const mockDatabaseMetricValues = {
   createMetricValues: jest.fn(),
   readLatestEntityMetricValues: jest.fn(),
-  readEntityMetricValuesInRange: jest.fn(),
+  readLatestEntityMetricValuesPerUtcDay: jest.fn(),
   cleanupExpiredMetrics: jest.fn(),
   readAggregatedMetricByEntityRefs: jest.fn(),
   readScalarAggregatedMetricByEntityRefs: jest.fn(),
+  readScalarAggregatedMetricTimeSeriesByEntityRefs: jest.fn(),
   readEntityMetricsWithFilters: jest.fn(),
 } as unknown as jest.Mocked<DatabaseMetricValues>;
 
@@ -75,11 +76,13 @@ export const buildMockDatabaseMetricValues = ({
   return {
     createMetricValues,
     readLatestEntityMetricValues,
-    readEntityMetricValuesInRange:
-      mockDatabaseMetricValues.readEntityMetricValuesInRange,
+    readLatestEntityMetricValuesPerUtcDay:
+      mockDatabaseMetricValues.readLatestEntityMetricValuesPerUtcDay,
     cleanupExpiredMetrics,
     readAggregatedMetricByEntityRefs,
     readScalarAggregatedMetricByEntityRefs,
+    readScalarAggregatedMetricTimeSeriesByEntityRefs:
+      mockDatabaseMetricValues.readScalarAggregatedMetricTimeSeriesByEntityRefs,
     readEntityMetricsWithFilters,
   } as unknown as jest.Mocked<DatabaseMetricValues>;
 };

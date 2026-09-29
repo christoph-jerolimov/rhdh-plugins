@@ -25,13 +25,18 @@ const scorecardTranslationIt = createTranslationMessages({
   ref: scorecardTranslationRef,
   messages: {
     'common.loading': 'Caricamento',
-    'dataSourcesDialog.title': '{{title}} sorgenti',
-    'dataSourcesDialog.close': 'Chiudere',
+    'common.current': 'attuale',
+    'dataSourcesDialog.title': '{{title}} fonti',
+    'dataSourcesDialog.close': 'Chiudi',
     'dataSourcesDialog.unknownPlugin': 'Sconosciuto',
     'dataSourcesDialog.statusTooltip':
-      'Valore {{value}} corrisponde alla soglia {{status}} {{expression}}',
+      'Il valore {{value}} corrisponde alla soglia {{status}} {{expression}}',
+    'dataSourcesDialog.collectorStatusTooltip':
+      'Questo collector fornisce solo dati di input. Il valore del check {{metric}} viene calcolato dai collector e mostrato sulla scheda scorecard.',
+    'dataSourcesDialog.collectorEmptyValue': '--',
+    'dataSourcesDialog.collectorUnavailableStatus': 'N/D',
     'dataSourcesDialog.columns.plugin': 'PLUGIN',
-    'dataSourcesDialog.columns.check': 'VERIFICA',
+    'dataSourcesDialog.columns.check': 'CONTROLLO',
     'dataSourcesDialog.columns.value': 'VALORE',
     'dataSourcesDialog.columns.status': 'STATO',
     'dataSourcesDialog.columns.lastSynced': 'ULTIMA SINCRONIZZAZIONE',
@@ -87,9 +92,9 @@ const scorecardTranslationIt = createTranslationMessages({
       'Punteggio massimo possibile',
     'metric.weightedStatusScoreCenterTooltipTotalLabel': 'Punteggio totale',
     'metric.weightedStatusScoreCenterTooltipBreakdownRow_one':
-      '{{status}}: {{count}} entity, score: {{score}}',
+      '{{status}}: {{count}} entità, punteggio: {{score}}',
     'metric.weightedStatusScoreCenterTooltipBreakdownRow_other':
-      '{{status}}: {{count}} entities, score: {{score}}',
+      '{{status}}: {{count}} entità, punteggio: {{score}}',
     'metric.weightedStatusScoreLegendTooltipEntitiesEach_one':
       '{{count}} entità, ciascuna {{score}}',
     'metric.weightedStatusScoreLegendTooltipEntitiesEach_other':
@@ -99,19 +104,20 @@ const scorecardTranslationIt = createTranslationMessages({
     'metric.drillDownCalculationFailures':
       'Si è verificato un errore durante il calcolo di questa metrica da parte di una o più entità.',
     'metric.dora.deploymentFrequency.description':
-      'Monitora la frequenza con cui il codice viene distribuito correttamente in produzione negli ultimi 30 giorni. I team di elite effettuano il deployment on demand (più volte al giorno).',
+      'Tiene traccia della frequenza con cui il codice è stato distribuito con successo in produzione negli ultimi 30 giorni. I deployment dalle prestazioni migliori vengono attivati su richiesta (più volte al giorno).',
     'metric.dora.deploymentFrequency.title': 'DORA - Frequenza di deployment',
     'metric.dora.medianLeadTimeForChanges.description':
-      'Misura il tempo dal commit del codice al deployment in produzione negli ultimi 30 giorni. I team di elite hanno un tempo di consegna inferiore a 24 ore.',
+      'Misura il tempo mediano intercorso tra il commit del codice e il deployment in produzione negli ultimi 30 giorni. Le prestazioni migliori registrano tempi inferiori alle 24 ore.',
     'metric.dora.medianLeadTimeForChanges.title':
-      'DORA - Tempo mediano di consegna delle modifiche',
+      'DORA - Tempo medio di preavviso per le modifiche',
     'metric.dora.changeFailureRate.description':
-      'Monitora la percentuale di deployment che causano un errore in produzione negli ultimi 30 giorni. I team di elite mantengono un tasso di fallimento delle modifiche inferiore al 5%.',
+      'Monitora la percentuale di deployment che hanno causato un errore in produzione negli ultimi 30 giorni. Le prestazioni migliori corrispondono a un tasso di fallimento delle modifiche inferiore al 5%.',
     'metric.dora.changeFailureRate.title':
       'DORA - Tasso di fallimento delle modifiche',
-    'metric.dora.meanTimeToRestore.description':
-      "Monitora il tempo medio per ripristinare il servizio dopo un incidente negli ultimi 30 giorni. I team di elite ripristinano il servizio in meno di un'ora.",
-    'metric.dora.meanTimeToRestore.title': 'DORA - Tempo medio di ripristino',
+    'metric.dora.medianTimeToRestore.description':
+      "Tiene traccia del tempo mediano necessario per ripristinare il servizio dopo un incidente negli ultimi 30 giorni. Le prestazioni migliori ripristinano il servizio in meno di un'ora.",
+    'metric.dora.medianTimeToRestore.title':
+      'DORA - Tempo mediano di ripristino',
     'metric.filecheck.description':
       'Verifica se il file {{name}} esiste nel repository.',
     'metric.filecheck.title': 'Verifica del file: {{name}}',
@@ -121,6 +127,11 @@ const scorecardTranslationIt = createTranslationMessages({
     'metric.homepageEntityCalculationHealth':
       '{{healthy}} / {{total}} entità senza errori di calcolo della metrica',
     'metric.homepageEntityHealthRatio': '{{healthy}}/{{total}} entità',
+    'aggregation.min': 'Min',
+    'aggregation.max': 'Max',
+    'aggregation.sum': 'Somma',
+    'aggregation.count': 'Conteggio',
+    'aggregation.average': 'Media',
     'metric.jira.openIssues.description':
       'Evidenzia il numero di problemi critici e bloccanti attualmente aperti in Jira.',
     'metric.jira.openIssues.title': 'Ticket di blocco aperti in Jira',
@@ -174,7 +185,7 @@ const scorecardTranslationIt = createTranslationMessages({
     'metric.sonarqube.securityReviewRating.title':
       'Valutazione di sicurezza di SonarQube',
     'metricGroupCard.menuAriaLabel': 'Altre opzioni',
-    'metricGroupCard.viewDataSources': 'Visualizza sorgenti',
+    'metricGroupCard.viewDataSources': 'Visualizza le fonti dei dati',
     'notFound.altText': 'Pagina non trovata',
     'notFound.contactSupport': 'Contatta il supporto',
     'notFound.description':
@@ -192,8 +203,8 @@ const scorecardTranslationIt = createTranslationMessages({
     'thresholds.entities_other': '{{count}} entità',
     'thresholds.error': 'Errore',
     'thresholds.exist': 'Esiste',
-    'thresholds.low': 'Basso',
-    'thresholds.medium': 'Medio',
+    'thresholds.low': 'Bassa',
+    'thresholds.medium': 'Media',
     'thresholds.missing': 'Mancante',
     'thresholds.noEntities': 'Nessuna entità nello stato {{category}}',
     'thresholds.success': 'Successo',

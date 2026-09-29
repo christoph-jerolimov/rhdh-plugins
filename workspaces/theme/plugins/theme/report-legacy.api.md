@@ -7,6 +7,7 @@ import { AppTheme } from '@backstage/core-plugin-api';
 import { default as DarkIcon } from '@mui/icons-material/Brightness2Rounded';
 import { JSX as JSX_2 } from 'react/jsx-runtime';
 import { default as LightIcon } from '@mui/icons-material/WbSunnyRounded';
+import { PropsWithChildren } from 'react';
 import { ReactNode } from 'react';
 import { Theme } from '@mui/material';
 import { UnifiedThemeOptions } from '@backstage/theme';
@@ -17,9 +18,43 @@ export type BackstageThemePalette = UnifiedThemeOptions['palette'];
 // @public (undocumented)
 export interface Branding {
   // (undocumented)
+  customCSS?: string;
+  // (undocumented)
   theme?: {
     [key: string]: ThemeConfig;
   };
+}
+
+// @public
+export interface BUITokens {
+  // (undocumented)
+  backgroundColor?: string;
+  // (undocumented)
+  borderColor?: string;
+  // (undocumented)
+  error?: string;
+  // (undocumented)
+  focusRing?: string;
+  // (undocumented)
+  fontFamily?: string;
+  // (undocumented)
+  fontFamilyMonospace?: string;
+  // (undocumented)
+  foregroundDisabled?: string;
+  // (undocumented)
+  foregroundPrimary?: string;
+  // (undocumented)
+  foregroundSecondary?: string;
+  // (undocumented)
+  info?: string;
+  // (undocumented)
+  primary?: string;
+  // (undocumented)
+  shadow?: string;
+  // (undocumented)
+  success?: string;
+  // (undocumented)
+  warning?: string;
 }
 
 // @public (undocumented)
@@ -55,6 +90,9 @@ export const LogoFull: (props: React.ComponentProps<'svg'>) => JSX_2.Element;
 
 // @public (undocumented)
 export const LogoIcon: (props: React.ComponentProps<'svg'>) => JSX_2.Element;
+
+// @public (undocumented)
+export const PageMainContainer: (input: PropsWithChildren) => JSX_2.Element;
 
 // @public (undocumented)
 export interface RHDHThemePalette {
@@ -108,6 +146,10 @@ export interface RHDHThemePalette {
 
 // @public (undocumented)
 export interface ThemeConfig {
+  // (undocumented)
+  bui?: {
+    tokens?: BUITokens;
+  };
   // (undocumented)
   defaultPageTheme?: string;
   // (undocumented)

@@ -1,5 +1,35 @@
 # @red-hat-developer-hub/backstage-plugin-orchestrator-backend
 
+## 8.13.2
+
+### Patch Changes
+
+- 2bebbeb: Updated dependency `prettier` to `3.9.8`.
+- 22ab37c: Updated dependency `prettier` to `3.9.7`.
+
+## 8.13.1
+
+### Patch Changes
+
+- 47fdead: Remove unused dependencies and declare imports that were previously unlisted.
+- Updated dependencies [47fdead]
+- Updated dependencies [213b75e]
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-common@3.11.0
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-node@1.5.1
+
+## 8.13.0
+
+### Minor Changes
+
+- 279803c: Backstage version bump to v1.54.6
+
+### Patch Changes
+
+- c7f1b5d: trim unused production exports and dead symbols
+- Updated dependencies [279803c]
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-common@3.10.0
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-node@1.5.0
+
 ## 8.12.1
 
 ### Patch Changes

@@ -27,7 +27,6 @@ import {
 } from '@red-hat-developer-hub/backstage-plugin-scorecard-common';
 import type { Entity } from '@backstage/catalog-model';
 import { normalizeOwnerRef } from '../utils/normalizeOwnerRef';
-import { formatUtcDate } from '../utils/formatUtcDate';
 import { MetricProvidersRegistry } from '../providers/MetricProvidersRegistry';
 import {
   NotAllowedError,
@@ -51,6 +50,7 @@ import { isMetricCalculationError } from '../utils/metricCalculationError';
 import { AggregatedMetricMapper } from './mappers';
 import { DbMetricValue } from '../database/types';
 import { ThresholdResolver } from '../threshold/ThresholdResolver';
+import { ThresholdEvaluator } from '../threshold/ThresholdEvaluator';
 
 type CatalogMetricServiceOptions = {
   catalog: CatalogService;
@@ -83,6 +83,7 @@ export class CatalogMetricService {
   private readonly registry: MetricProvidersRegistry;
   private readonly database: DatabaseMetricValues;
   private readonly thresholdResolver: ThresholdResolver;
+  private readonly thresholdEvaluator = new ThresholdEvaluator();
 
   private static readonly MAX_FETCHABLE_ROWS = 10_000;
   private static readonly BATCH_SIZE = 100;
@@ -168,6 +169,7 @@ export class CatalogMetricService {
             unit: metric.unit,
             history: metric.history,
             defaultVisualization: metric.defaultVisualization,
+            collectorIds: metric.collectorIds,
           },
           ...(isMetricCalcError && {
             error:
@@ -192,8 +194,12 @@ export class CatalogMetricService {
   /**
    * Get a daily time series for one metric on one catalog entity.
    *
-   * Buckets samples by UTC calendar day and keeps the latest row (`MAX(id)`) per day.
-   * Calculation failures and null values are excluded from `points`.
+   * Returns at most one point per UTC calendar day: the latest sample
+   * (`MAX(id)`), whether success or calculation error. Calculation failures
+   * use `value: null` and `error`. Threshold evaluation failures also set
+   * `error` (with `thresholdEvaluation` null). When entity threshold
+   * resolution fails, `thresholdsError` is set on the response and points are
+   * not classified (`thresholdEvaluation` null, no per-point `error`).
    *
    * @param entityRef - Entity reference in format "kind:namespace/name"
    * @param metricId - Metric ID to fetch
@@ -225,32 +231,61 @@ export class CatalogMetricService {
       );
     }
 
-    const rows = await this.database.readEntityMetricValuesInRange(
+    const rows = await this.database.readLatestEntityMetricValuesPerUtcDay(
       entityRef,
       metricId,
       from,
       to,
     );
 
-    const latestByUtcDay = new Map<string, DbMetricValue>();
-    for (const row of rows) {
-      if (row.value === null || isMetricCalculationError(row)) {
-        continue;
-      }
-      const dayKey = formatUtcDate(row.timestamp);
-      const existing = latestByUtcDay.get(dayKey);
-      // Postgres may return bigIncrements as strings; compare numerically.
-      if (!existing || Number(row.id) > Number(existing.id)) {
-        latestByUtcDay.set(dayKey, row);
-      }
+    let thresholds: ThresholdConfig | undefined;
+    let thresholdsError: string | undefined;
+    try {
+      thresholds = this.thresholdResolver.resolveEntityThresholds(
+        entity,
+        metric,
+      );
+    } catch (err) {
+      thresholdsError = stringifyError(err);
+      this.logger.warn(
+        `Failed to resolve thresholds for metric '${metric.id}' on entity '${entityRef}': ${thresholdsError}`,
+      );
     }
 
-    const points: MetricTimeSeriesPoint[] = Array.from(latestByUtcDay.values())
-      .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())
-      .map(row => ({
-        value: row.value as NonNullable<typeof row.value>,
+    const points: MetricTimeSeriesPoint[] = rows.map(row => {
+      if (isMetricCalculationError(row)) {
+        return {
+          value: null,
+          timestamp: row.timestamp.toISOString(),
+          error: row.errorMessage!,
+        };
+      }
+
+      let thresholdEvaluation: string | null = null;
+      let error: string | undefined;
+      if (row.value !== null && thresholds) {
+        try {
+          thresholdEvaluation =
+            this.thresholdEvaluator.getFirstMatchingThreshold(
+              row.value,
+              metric.type,
+              thresholds,
+            ) ?? null;
+        } catch (err) {
+          error = stringifyError(err);
+          this.logger.warn(
+            `Failed to evaluate thresholds for metric '${metric.id}' on entity '${entityRef}': ${error}`,
+          );
+        }
+      }
+
+      return {
+        value: row.value,
         timestamp: row.timestamp.toISOString(),
-      }));
+        thresholdEvaluation,
+        ...(error ? { error } : {}),
+      };
+    });
 
     return {
       metricId: metric.id,
@@ -263,7 +298,10 @@ export class CatalogMetricService {
         unit: metric.unit,
         history: metric.history,
         defaultVisualization: metric.defaultVisualization,
+        collectorIds: metric.collectorIds,
       },
+      ...(thresholds ? { thresholds } : {}),
+      ...(thresholdsError ? { thresholdsError } : {}),
     };
   }
 

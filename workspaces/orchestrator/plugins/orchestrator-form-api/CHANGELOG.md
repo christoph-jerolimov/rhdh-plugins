@@ -1,5 +1,32 @@
 # @red-hat-developer-hub/backstage-plugin-orchestrator-form-api
 
+## 2.11.2
+
+### Patch Changes
+
+- 2bebbeb: Updated dependency `prettier` to `3.9.8`.
+- 22ab37c: Updated dependency `prettier` to `3.9.7`.
+
+## 2.11.1
+
+### Patch Changes
+
+- 47fdead: Remove unused dependencies and declare imports that were previously unlisted.
+- Updated dependencies [47fdead]
+- Updated dependencies [213b75e]
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-common@3.11.0
+
+## 2.11.0
+
+### Minor Changes
+
+- 279803c: Backstage version bump to v1.54.6
+
+### Patch Changes
+
+- Updated dependencies [279803c]
+  - @red-hat-developer-hub/backstage-plugin-orchestrator-common@3.10.0
+
 ## 2.10.0
 
 ### Minor Changes

@@ -25,13 +25,18 @@ const scorecardTranslationEs = createTranslationMessages({
   ref: scorecardTranslationRef,
   messages: {
     'common.loading': 'Cargando',
-    'dataSourcesDialog.title': '{{title}} fuentes',
+    'common.current': 'actual',
+    'dataSourcesDialog.title': 'Fuentes de {{title}}',
     'dataSourcesDialog.close': 'Cerrar',
     'dataSourcesDialog.unknownPlugin': 'Desconocido',
     'dataSourcesDialog.statusTooltip':
-      'Valor {{value}} coincide con umbral {{status}} {{expression}}',
-    'dataSourcesDialog.columns.plugin': 'PLUGIN',
-    'dataSourcesDialog.columns.check': 'VERIFICACIÓN',
+      'El valor {{value}} coincide con el umbral {{status}} {{expression}}',
+    'dataSourcesDialog.collectorStatusTooltip':
+      'Este recopilador proporciona solo datos de entrada. El valor del check {{metric}} se calcula a partir de los recopiladores y se muestra en la tarjeta de scorecard.',
+    'dataSourcesDialog.collectorEmptyValue': '--',
+    'dataSourcesDialog.collectorUnavailableStatus': 'N/D',
+    'dataSourcesDialog.columns.plugin': 'COMPLEMENTO',
+    'dataSourcesDialog.columns.check': 'CONTROLAR',
     'dataSourcesDialog.columns.value': 'VALOR',
     'dataSourcesDialog.columns.status': 'ESTADO',
     'dataSourcesDialog.columns.lastSynced': 'ÚLTIMA SINCRONIZACIÓN',
@@ -86,9 +91,9 @@ const scorecardTranslationEs = createTranslationMessages({
       'Puntuación máxima posible',
     'metric.weightedStatusScoreCenterTooltipTotalLabel': 'Puntuación total',
     'metric.weightedStatusScoreCenterTooltipBreakdownRow_one':
-      '{{status}}: {{count}} entity, score: {{score}}',
+      '{{status}}: {{count}} entidad, puntuación: {{score}}',
     'metric.weightedStatusScoreCenterTooltipBreakdownRow_other':
-      '{{status}}: {{count}} entities, score: {{score}}',
+      '{{status}}: {{count}} entidades, puntuación: {{score}}',
     'metric.weightedStatusScoreLegendTooltipEntitiesEach_one':
       '{{count}} entidad, cada una con {{score}}',
     'metric.weightedStatusScoreLegendTooltipEntitiesEach_other':
@@ -98,20 +103,21 @@ const scorecardTranslationEs = createTranslationMessages({
     'metric.drillDownCalculationFailures':
       'No se pudieron validar una o más entidades cuando se calculó esta métrica.',
     'metric.dora.deploymentFrequency.description':
-      'Realiza un seguimiento de la frecuencia con la que el código se implementa correctamente en producción durante los últimos 30 días. Los mejores equipos implementan bajo demanda (varias veces al día).',
+      'Registra la frecuencia con la que el código se implementa correctamente en producción durante los últimos 30 días. Los profesionales de élite implementan bajo demanda (varias veces al día).',
     'metric.dora.deploymentFrequency.title':
-      'DORA - Frecuencia de implementación',
+      'DORA: frecuencia de implementación',
     'metric.dora.medianLeadTimeForChanges.description':
-      'Mide el tiempo desde el commit del código hasta la implementación en producción durante los últimos 30 días. Los mejores equipos tienen un tiempo de entrega inferior a 24 horas.',
+      'Mide el tiempo medio transcurrido desde la confirmación del código hasta su implementación en producción durante los últimos 30 días. Los profesionales de élite tienen un tiempo de entrega inferior a 24 horas.',
     'metric.dora.medianLeadTimeForChanges.title':
-      'DORA - Tiempo medio de entrega de cambios',
+      'DORA: tiempo medio de entrega de cambios',
     'metric.dora.changeFailureRate.description':
-      'Supervisa el porcentaje de implementaciones que provocan un fallo en producción durante los últimos 30 días. Los mejores equipos mantienen una tasa de fallos de cambio inferior al 5 %.',
-    'metric.dora.changeFailureRate.title': 'DORA - Tasa de fallos de cambio',
-    'metric.dora.meanTimeToRestore.description':
-      'Realiza un seguimiento del tiempo medio para restaurar el servicio tras un incidente durante los últimos 30 días. Los mejores equipos restauran el servicio en menos de una hora.',
-    'metric.dora.meanTimeToRestore.title':
-      'DORA - Tiempo medio de restauración',
+      'Controla el porcentaje de implementaciones que provocan fallos en producción durante los últimos 30 días. Los profesionales de élite mantienen una tasa de fallos en los cambios inferior al 5 %.',
+    'metric.dora.changeFailureRate.title':
+      'DORA: tasa de fallos en los cambios',
+    'metric.dora.medianTimeToRestore.description':
+      'Registra el tiempo medio necesario para restablecer el servicio tras un incidente en los últimos 30 días. Los profesionales de élite restablecen el servicio en menos de una hora.',
+    'metric.dora.medianTimeToRestore.title':
+      'DORA: tiempo medio de recuperación',
     'metric.filecheck.description':
       'Comprueba si el archivo {{name}} existe en el repositorio.',
     'metric.filecheck.title': 'Verificación de archivo: {{name}}',
@@ -121,6 +127,11 @@ const scorecardTranslationEs = createTranslationMessages({
     'metric.homepageEntityCalculationHealth':
       '{{healthy}} / {{total}} entidades sin errores de cálculo de métricas',
     'metric.homepageEntityHealthRatio': '{{healthy}}/{{total}} entidades',
+    'aggregation.min': 'Mín.',
+    'aggregation.max': 'Máx.',
+    'aggregation.sum': 'Suma',
+    'aggregation.count': 'Recuento',
+    'aggregation.average': 'Promedio',
     'metric.jira.openIssues.description':
       'Destaca la cantidad de problemas críticos y bloqueantes que están abiertos actualmente en Jira.',
     'metric.jira.openIssues.title': 'Tickets de bloqueo abiertos en Jira',
@@ -175,7 +186,7 @@ const scorecardTranslationEs = createTranslationMessages({
     'metric.sonarqube.securityReviewRating.title':
       'Calificación de la revisión de seguridad de SonarQube',
     'metricGroupCard.menuAriaLabel': 'Más opciones',
-    'metricGroupCard.viewDataSources': 'Ver fuentes',
+    'metricGroupCard.viewDataSources': 'Ver fuentes de datos',
     'notFound.altText': 'Pagina no encontrada',
     'notFound.contactSupport': 'Comuníquese con Soporte',
     'notFound.description':
@@ -193,8 +204,8 @@ const scorecardTranslationEs = createTranslationMessages({
     'thresholds.entities_other': '{{count}} entidades',
     'thresholds.error': 'Error',
     'thresholds.exist': 'Existente',
-    'thresholds.low': 'Bajo',
-    'thresholds.medium': 'Medio',
+    'thresholds.low': 'Baja',
+    'thresholds.medium': 'Media',
     'thresholds.missing': 'Faltante',
     'thresholds.noEntities': 'No hay entidades en el estado {{category}}',
     'thresholds.success': 'Éxito',

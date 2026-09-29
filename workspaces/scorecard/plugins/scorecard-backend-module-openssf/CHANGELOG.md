@@ -1,5 +1,81 @@
 # @red-hat-developer-hub/backstage-plugin-scorecard-backend-module-openssf
 
+## 2.0.0
+
+### Major Changes
+
+- 23151ae: **BREAKING**: OpenSSF checks are now a single provider, `openssf.securityScorecard`, instead of one provider per check (`openssf.maintained`, `openssf.branchProtection`, and so on). All 18 checks are fetched in one HTTP request.
+
+  Metric IDs are unchanged. Catalog annotations that use the full metric ID (`scorecard.io/openssf.maintained.thresholds.rules.<key>`) stay the same.
+
+  `schedule` can be set only once, on `securityScorecard`, and applies to every check. Per-check `schedule` blocks are no longer read.
+
+  Shared thresholds move to that same provider key. A threshold that applied to only one check moves under `metrics.<metricName>`. If every check used the same rules, keep them only on `securityScorecard.thresholds` and omit `metrics`.
+
+  ```diff
+   scorecard:
+     metricProviders:
+       openssf:
+  -      maintained:
+  -        schedule: ...
+  -        thresholds: ...
+  -      branchProtection:
+  -        schedule: ...
+  -        thresholds: ...
+  +      securityScorecard:
+  +        schedule: ...
+  +        thresholds: ...
+  +        metrics:
+  +          maintained:
+  +            thresholds: ...
+  ```
+
+## 1.1.3
+
+### Patch Changes
+
+- @red-hat-developer-hub/backstage-plugin-scorecard-common@4.4.1
+- @red-hat-developer-hub/backstage-plugin-scorecard-node@4.4.1
+
+## 1.1.2
+
+### Patch Changes
+
+- 8c690d2: Remove unused package dependencies reported by knip. Add the missing `@backstage/config` dependency used by threshold config helpers.
+- Updated dependencies [8c690d2]
+  - @red-hat-developer-hub/backstage-plugin-scorecard-node@4.4.0
+  - @red-hat-developer-hub/backstage-plugin-scorecard-common@4.4.0
+
+## 1.1.1
+
+### Patch Changes
+
+- @red-hat-developer-hub/backstage-plugin-scorecard-common@4.3.1
+- @red-hat-developer-hub/backstage-plugin-scorecard-node@4.3.1
+
+## 1.1.0
+
+### Minor Changes
+
+- a7a1b4a: Backstage version bump to v1.54.6
+
+### Patch Changes
+
+- Updated dependencies [9c1936e]
+- Updated dependencies [2bb0ec5]
+- Updated dependencies [485fadb]
+- Updated dependencies [befccc2]
+- Updated dependencies [c380e6b]
+- Updated dependencies [fea86e8]
+- Updated dependencies [ff6683f]
+- Updated dependencies [ecb789b]
+- Updated dependencies [47ac76d]
+- Updated dependencies [c7b7410]
+- Updated dependencies [f3f71a5]
+- Updated dependencies [a7a1b4a]
+  - @red-hat-developer-hub/backstage-plugin-scorecard-common@4.3.0
+  - @red-hat-developer-hub/backstage-plugin-scorecard-node@4.3.0
+
 ## 1.0.2
 
 ### Patch Changes

@@ -21,7 +21,7 @@ import './assets/fonts/font.min.css';
 
 export * from './hooks';
 export * from './themes';
-export { LogoFull, LogoIcon } from './components';
+export { LogoFull, LogoIcon, PageMainContainer } from './components';
 export type {
   BackstageThemePalette,
   RHDHThemePalette,
@@ -29,6 +29,7 @@ export type {
   ThemeConfigPageTheme,
   ThemeConfigOptions,
   ThemeConfig,
+  BUITokens,
   Branding,
   Config,
 } from './types';

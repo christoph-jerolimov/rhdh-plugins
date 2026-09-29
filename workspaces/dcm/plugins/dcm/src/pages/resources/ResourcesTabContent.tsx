@@ -16,11 +16,11 @@
 
 import { useMemo, useState } from 'react';
 import { TableColumn, Progress } from '@backstage/core-components';
-import { useApi } from '@backstage/core-plugin-api';
+
 import { Box, Button, Chip, Typography } from '@material-ui/core';
 import MuiAlert from '@material-ui/lab/Alert';
 import type { ServiceTypeInstance } from '@red-hat-developer-hub/backstage-plugin-dcm-common';
-import { resourcesApiRef } from '../../apis';
+import { useDcmClients } from '../../api/DcmClientsContext';
 import { DcmSearchTableCard } from '../../components/dcmTabListHelpers';
 import { useDcmStyles } from '../../components/dcmStyles';
 import emptyIllustration from '../../assets/environments-empty-state.png';
@@ -32,7 +32,7 @@ import { useTranslation } from '../../hooks/useTranslation';
 
 export function ResourcesTabContent() {
   const classes = useDcmStyles();
-  const resourcesApi = useApi(resourcesApiRef);
+  const { resourcesApi } = useDcmClients();
   const { t } = useTranslation();
 
   const [pageSize, setPageSize] = usePersistedPageSize('resources');
@@ -100,6 +100,9 @@ export function ResourcesTabContent() {
           ),
       },
       {
+        // TODO(FLPATH-4773): Rename column to "Environment" once the Resources
+        // API replaces provider_name with an agent/environment reference, and
+        // mark resources as degraded when the associated agent is unavailable.
         title: t('resources.columns.provider'),
         field: 'provider_name',
         render: inst => (

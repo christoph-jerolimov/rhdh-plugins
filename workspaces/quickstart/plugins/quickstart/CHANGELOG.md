@@ -1,5 +1,27 @@
 # @red-hat-developer-hub/backstage-plugin-quickstart
 
+## 2.2.0
+
+### Minor Changes
+
+- dfda470: Defer Quickstart NFS drawer content, init snackbar, and help menu item to async chunks so the Module Federation sync graph stays thin. The help menu uses a blueprint `loader` and a local MUI `MenuItem` instead of `global-header/components` to avoid pulling `@backstage/core-components` into the quickstart MF graph.
+
+  CTA links use MUI `Button` with `react-router-dom` `Link` (and native anchors for external URLs) instead of `@backstage/ui`. Invalid icon fallbacks use MUI `WidgetsOutlined` instead of a copied `ShapesOutlinedIcon`. Menu-item registration imports `GlobalHeaderMenuItemBlueprint` from `global-header/blueprints` so the critical header / markdown highlight stack stays out of the quickstart async graph.
+
+  Bumps `@red-hat-developer-hub/backstage-plugin-global-header` for the `/blueprints` export and loader blueprint API.
+
+  Adds public legacy exports `quickstartTranslationRef` and `quickstartTranslations`. Legacy `QuickstartButton` and `QuickstartDrawerProvider` exported types widen from concrete function signatures to `React.ComponentType` because they are now re-exported from lazy component extensions rather than concrete component modules.
+
+### Patch Changes
+
+- f5f0d02: Updated translations for RHDH 2.1 (s3297).
+
+## 2.1.0
+
+### Minor Changes
+
+- 0613276: Backstage version bump to v1.54.6. Also bump `@red-hat-developer-hub/backstage-plugin-app-react` to `^1.0.0` (NFS exports moved off `/alpha`) and `@red-hat-developer-hub/backstage-plugin-global-header` to `^2.0.1` (`configSchema` blueprints) for `frontend-plugin-api` 0.18.0 compatibility.
+
 ## 2.0.1
 
 ### Patch Changes
