@@ -127,6 +127,7 @@ describe('createComponents', () => {
         backgroundColor: '#292929',
         borderRadius: '1rem',
         margin: 0,
+        marginLeft: 'calc(1.5rem * 2)',
         flex: '1 1 auto',
         minHeight: 0,
         overflowY: 'auto',
@@ -135,6 +136,36 @@ describe('createComponents', () => {
         flexDirection: 'column',
       }),
     );
+  });
+
+  it('floats the sidebar as a rounded card inside the page inset', () => {
+    const actual = createComponents({ palette: customDarkTheme() });
+    const drawer = actual.BackstageSidebar?.styleOverrides?.drawer as
+      | Record<string, unknown>
+      | undefined;
+    expect(drawer?.['@media (min-width: 600px)']).toEqual(
+      expect.objectContaining({
+        top: '1.5rem',
+        bottom: '1.5rem',
+        left: '1.5rem',
+        borderRadius: '1rem',
+        paddingTop: '0.5rem',
+      }),
+    );
+  });
+
+  it('omits the sidebar gap when no page inset is configured', () => {
+    const actual = createComponents({});
+    const root = actual.BackstageSidebarPage?.styleOverrides?.root as
+      | Record<string, unknown>
+      | undefined;
+    const desktop = root?.['@media (min-width: 600px)'] as
+      | Record<string, unknown>
+      | undefined;
+    const main = desktop?.[
+      "& > [class*='MuiLinearProgress-root'], & > main, & > [class*='RHDHPageMainContainer']"
+    ] as Record<string, unknown> | undefined;
+    expect(main?.marginLeft).toBeUndefined();
   });
 
   it('makes NFS BUI main a flex column without unlocking viewport height', () => {

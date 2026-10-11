@@ -32,7 +32,7 @@ export const darkThemeOverrides: Partial<ThemeConfigPalette> = {
     color: '#ffffff',
     selectedColor: '#ffffff',
     navItem: {
-      hoverBackground: '#292929',
+      hoverBackground: '#383838',
     },
     submenu: {
       background: '#292929',
@@ -67,9 +67,9 @@ export const darkThemeOverrides: Partial<ThemeConfigPalette> = {
       mainSectionBackgroundColor: '#292929',
       formControlBackgroundColor: '#36373A',
 
-      sidebarBackgroundColor: '#151515',
+      sidebarBackgroundColor: '#292929',
       sidebarDividerColor: '#383838',
-      sidebarItemSelectedBackgroundColor: '#292929',
+      sidebarItemSelectedBackgroundColor: '#383838',
 
       tableTitleColor: '#E0E0E0',
       tableSubtitleColor: '#E0E0E0',

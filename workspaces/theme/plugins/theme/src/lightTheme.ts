@@ -27,12 +27,12 @@ export const lightThemeOverrides: Partial<ThemeConfigPalette> = {
     main: '#0066CC',
   },
   navigation: {
-    background: '#f2f2f2',
+    background: '#FFF',
     indicator: 'transparent',
     color: '#151515',
     selectedColor: '#151515',
     navItem: {
-      hoverBackground: '#ffffff',
+      hoverBackground: '#f2f2f2',
     },
     submenu: {
       background: '#FFF',
@@ -75,9 +75,9 @@ export const lightThemeOverrides: Partial<ThemeConfigPalette> = {
       mainSectionBackgroundColor: '#FFF',
       formControlBackgroundColor: '#FFF',
 
-      sidebarBackgroundColor: '#f2f2f2',
+      sidebarBackgroundColor: '#FFF',
       sidebarDividerColor: '#c7c7c7',
-      sidebarItemSelectedBackgroundColor: '#FFF',
+      sidebarItemSelectedBackgroundColor: '#f2f2f2',
 
       tableTitleColor: '#181818',
       tableSubtitleColor: '#616161',

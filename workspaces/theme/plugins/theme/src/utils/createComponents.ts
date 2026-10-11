@@ -680,6 +680,19 @@ export const createComponents = (themeConfig: ThemeConfig): Components => {
           paddingBottom: '1.5rem',
           backgroundColor: sidebarBackgroundColor,
           alignItems: 'stretch',
+          // PatternFly-like page inset: float the sidebar as its own rounded
+          // card inside the inset instead of pinning it to the viewport edge.
+          // The drawer is absolutely positioned inside the fixed sidebar root,
+          // so offsetting it here keeps it clear of the viewport edges.
+          // Only in desktop view (mobile uses the bottom navigation).
+          '@media (min-width: 600px)': {
+            top: general.pageInset,
+            bottom: general.pageInset,
+            left: general.pageInset,
+            // Match the main content well (PF `--pf-t--global--border--radius--medium`).
+            borderRadius: '1rem',
+            paddingTop: '0.5rem',
+          },
           '& hr': {
             backgroundColor: general.sidebarDividerColor,
           },
@@ -840,14 +853,20 @@ export const createComponents = (themeConfig: ThemeConfig): Components => {
                 borderRadius: '1rem',
                 clipPath: 'rect(0 100% 100% 0 round 1rem)',
                 margin: 0,
+                // Backstage pads the page by the drawer width only. The sidebar
+                // card is offset by one inset (see BackstageSidebar drawer), so add
+                // that plus one more inset as the gap between sidebar and content.
+                marginLeft: general.pageInset
+                  ? `calc(${general.pageInset} * 2)`
+                  : undefined,
                 // Fill the inset well so short pages use mainSectionBackgroundColor
                 // (#292929) instead of leaving a pageInset (#151515) band below content.
                 backgroundColor: general.mainSectionBackgroundColor,
                 // Flex-fill the padded content box; minHeight:0 enables internal scroll.
                 flex: '1 1 auto',
                 minHeight: 0,
+                // Stretch to the remaining width (minus marginLeft above).
                 alignSelf: 'stretch',
-                width: '100%',
                 // Scroll only inside this well; contain so wheel/trackpad does not
                 // chain to the document once you hit the top/bottom.
                 overflowY: 'auto',
