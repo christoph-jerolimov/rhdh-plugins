@@ -14,50 +14,23 @@
  * limitations under the License.
  */
 
-import {
-  createExtensionInput,
-  createFrontendModule,
-} from '@backstage/frontend-plugin-api';
-import { AppRootWrapperBlueprint } from '@backstage/plugin-app-react';
-
-import {
-  ApplicationDrawer,
-  appDrawerContentDataRef,
-} from '@red-hat-developer-hub/backstage-plugin-app-react';
+import { appLayoutExtension, appLayoutModule } from '../layout/appLayoutModule';
 
 /**
- * Wrapper extension that renders the ApplicationDrawer around the app content.
- *
- * Uses AppRootWrapperBlueprint.makeWithOverrides to stay aligned with the
- * blueprint API while adding a custom `drawers` input for content extensions.
- * Drawer state is managed by a global singleton store (see drawerStore.ts)
- * rather than a React context provider.
+ * The app drawer is rendered by the RHDH app layout since the headers were
+ * introduced; this alias keeps existing imports working.
  *
  * @public
+ * @deprecated Use `appLayoutExtension` instead.
  */
-export const appDrawerExtension = AppRootWrapperBlueprint.makeWithOverrides({
-  name: 'drawer',
-  inputs: {
-    drawers: createExtensionInput([appDrawerContentDataRef]),
-  },
-  factory(originalFactory, { inputs }) {
-    const contents = inputs.drawers.map(d => d.get(appDrawerContentDataRef));
-    return originalFactory({
-      component: ({ children }) => (
-        <ApplicationDrawer contents={contents}>{children}</ApplicationDrawer>
-      ),
-    });
-  },
-});
+export const appDrawerExtension = appLayoutExtension;
 
 /**
- * Frontend module that provides the app drawer system.
- * Registers a wrapper extension that renders the drawer and accepts
- * drawer content contributions via inputs.
+ * The app drawer is rendered by the RHDH app layout since the headers were
+ * introduced; this alias keeps existing imports and the
+ * `./app-drawer-module` entry point working.
  *
  * @public
+ * @deprecated Use `appLayoutModule` instead.
  */
-export const appDrawerModule = createFrontendModule({
-  pluginId: 'app',
-  extensions: [appDrawerExtension],
-});
+export const appDrawerModule = appLayoutModule;

@@ -22,15 +22,16 @@ import {
 } from '@red-hat-developer-hub/backstage-plugin-app-react';
 
 import { autoLogoutElement } from './autoLogout/autoLogoutExtension';
-import { appDrawerExtension } from './drawer/appDrawerModule';
 import { commonIconsExtension } from './icons/commonIconsExtension';
+import { appLayoutExtension } from './layout/appLayoutModule';
 import { appSidebarExtension } from './sidebar/appSidebarModule';
 import { defaultSidebarExtensions } from './sidebar/defaultSidebarExtensions';
 import { appDefaultsTranslations } from './translations';
 
 /**
  * RHDH app module for `pluginId: 'app'`.
- * Provides the application drawer, the priority-ordered sidebar, the
+ * Provides the app layout (priority-ordered headers on top, sidebar, content
+ * and the application drawer side by side), the priority-ordered sidebar, the
  * extensible scaffolder template card, the common RHDH icon catalog
  * (`IconBundleBlueprint`), and the AutoLogout mechanism (disabled by default;
  * opt-in via `auth.autologout.enabled: true`).
@@ -41,7 +42,7 @@ import { appDefaultsTranslations } from './translations';
 export const appDefaultsModule = createFrontendModule({
   pluginId: 'app',
   extensions: [
-    appDrawerExtension,
+    appLayoutExtension,
     appSidebarExtension,
     ...defaultSidebarExtensions,
     templateCardExtension,
