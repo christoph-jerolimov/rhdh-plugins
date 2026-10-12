@@ -23,7 +23,7 @@ import { appHeaderDataRef } from './appHeaderDataRef';
 /**
  * Blueprint for plugins to contribute a header bar to the app layout.
  *
- * Headers attach to the `headers` input of the `app/layout` extension
+ * Headers attach to the `headers` input of the `app/rhdh-layout` extension
  * provided by `@red-hat-developer-hub/backstage-plugin-app-defaults`. The
  * layout stacks all contributed headers above the sidebar, the page content
  * and the app drawer, ordered by `priority` (higher first, i.e. closer to
@@ -55,7 +55,7 @@ import { appHeaderDataRef } from './appHeaderDataRef';
  */
 export const AppHeaderBlueprint = createExtensionBlueprint({
   kind: 'app-header',
-  attachTo: { id: 'app/layout', input: 'headers' },
+  attachTo: { id: 'app/rhdh-layout', input: 'headers' },
   output: [appHeaderDataRef],
   dataRefs: {
     header: appHeaderDataRef,

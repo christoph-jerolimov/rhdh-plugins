@@ -32,11 +32,12 @@ export default createApp({
 });
 ```
 
-This overrides the Backstage `app/layout` extension with a layout that stacks
+This registers `app/rhdh-layout`, a layout that stacks
 all contributed headers at the top and renders the sidebar, the page content
-and the `ApplicationDrawer` side by side below them. The layout accepts header
-contributions via its `headers` input and drawer content contributions via its
-`drawers` input. Drawer state is managed by a global singleton store, so
+and the `ApplicationDrawer` side by side below them, and overrides the
+Backstage `app/layout` extension so it only forwards the navigation and the
+page content to the RHDH layout. The layout accepts header contributions via
+its `headers` input and drawer content contributions via its `drawers` input. Drawer state is managed by a global singleton store, so
 `useAppDrawer()` works from anywhere in the React tree without a wrapping
 provider.
 
@@ -45,7 +46,7 @@ provider.
 ### Contributing an App Header
 
 Use `AppHeaderBlueprint` to render a header bar above the whole app. Headers
-attach to the `headers` input of the `app/layout` extension and are stacked
+attach to the `headers` input of the `app/rhdh-layout` extension and are stacked
 from the highest to the lowest `priority`, above the sidebar, the content and
 the drawer. Each header renders in its own error boundary.
 
@@ -89,7 +90,7 @@ app:
 ### Contributing a Drawer
 
 Use `AppDrawerContentBlueprint` to declare drawer content in your plugin.
-Drawers attach to the `drawers` input of the `app/layout` extension and the
+Drawers attach to the `drawers` input of the `app/rhdh-layout` extension and the
 active one renders next to the page content, below the headers:
 
 ```typescript
@@ -370,7 +371,7 @@ Direct-use OFS components for backward compatibility:
 
 ### Layout module
 
-The `app/layout` override that renders the headers and the drawer lives in
+The `app/rhdh-layout` extension that renders the headers and the drawer lives in
 `@red-hat-developer-hub/backstage-plugin-app-defaults` (`appLayoutModule`,
 also default-exported from its `./app-layout-module` entry for Scalprum /
 module-federation dynamic loading).

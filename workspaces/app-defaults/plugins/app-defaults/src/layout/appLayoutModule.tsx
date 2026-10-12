@@ -17,6 +17,7 @@
 import {
   coreExtensionData,
   createExtension,
+  createExtensionDataRef,
   createExtensionInput,
   createFrontendModule,
 } from '@backstage/frontend-plugin-api';
@@ -28,21 +29,29 @@ import {
 import { AppLayout } from './AppLayout';
 
 /**
- * Override of the Backstage `app/layout` extension that renders the RHDH
- * {@link AppLayout}: all headers contributed via `AppHeaderBlueprint` on
- * top, and the sidebar, the page content and the app drawer side by side
- * below them.
- *
- * Extension ID: `app/layout`. `AppHeaderBlueprint` attaches to the
- * `headers` input and `AppDrawerContentBlueprint` to the `drawers` input,
- * both from `@red-hat-developer-hub/backstage-plugin-app-react`, so plugins
- * only need to declare their headers and drawers.
+ * Extension data ref carrying the Backstage app navigation and the routed
+ * page content from the `app/layout` slot to the RHDH layout.
  *
  * @public
  */
-export const appLayoutExtension = createExtension({
+export const appLayoutPageDataRef = createExtensionDataRef<{
+  nav: JSX.Element;
+  content: JSX.Element;
+}>().with({ id: 'rhdh.app.layout.page' });
+
+/**
+ * Override of the Backstage `app/layout` extension. Backstage attaches the
+ * app navigation (`app/nav`) and the routed page content (`app/routes`) to
+ * this extension ID, so it keeps its name; instead of rendering the stock
+ * sidebar page it forwards both to {@link appLayoutExtension}, which renders
+ * the RHDH layout. Installed together with it by {@link appLayoutModule} and
+ * `appDefaultsModule`.
+ *
+ * @public
+ */
+export const appLayoutPageExtension = createExtension({
   name: 'layout',
-  attachTo: { id: 'app/root', input: 'children' },
+  attachTo: { id: 'app/rhdh-layout', input: 'page' },
   inputs: {
     nav: createExtensionInput([coreExtensionData.reactElement], {
       singleton: true,
@@ -50,11 +59,43 @@ export const appLayoutExtension = createExtension({
     content: createExtensionInput([coreExtensionData.reactElement], {
       singleton: true,
     }),
+  },
+  output: [appLayoutPageDataRef],
+  factory({ inputs }) {
+    return [
+      appLayoutPageDataRef({
+        nav: inputs.nav.get(coreExtensionData.reactElement),
+        content: inputs.content.get(coreExtensionData.reactElement),
+      }),
+    ];
+  },
+});
+
+/**
+ * App layout extension that replaces the Backstage default layout with the
+ * RHDH {@link AppLayout}: all headers contributed via `AppHeaderBlueprint`
+ * on top, and the sidebar, the page content and the app drawer side by side
+ * below them.
+ *
+ * Extension ID: `app/rhdh-layout`. `AppHeaderBlueprint` attaches to the
+ * `headers` input and `AppDrawerContentBlueprint` to the `drawers` input,
+ * both from `@red-hat-developer-hub/backstage-plugin-app-react`, so plugins
+ * only need to declare their headers and drawers. The sidebar and the page
+ * content arrive through the `page` input from {@link appLayoutPageExtension}.
+ *
+ * @public
+ */
+export const appLayoutExtension = createExtension({
+  name: 'rhdh-layout',
+  attachTo: { id: 'app/root', input: 'children' },
+  inputs: {
+    page: createExtensionInput([appLayoutPageDataRef], { singleton: true }),
     headers: createExtensionInput([appHeaderDataRef]),
     drawers: createExtensionInput([appDrawerContentDataRef]),
   },
   output: [coreExtensionData.reactElement],
   factory({ inputs }) {
+    const { nav, content } = inputs.page.get(appLayoutPageDataRef);
     const headers = inputs.headers.map(h => h.get(appHeaderDataRef));
     const drawers = inputs.drawers.map(d => d.get(appDrawerContentDataRef));
     return [
@@ -62,8 +103,8 @@ export const appLayoutExtension = createExtension({
         <AppLayout
           headers={headers}
           drawers={drawers}
-          nav={inputs.nav.get(coreExtensionData.reactElement)}
-          content={inputs.content.get(coreExtensionData.reactElement)}
+          nav={nav}
+          content={content}
         />,
       ),
     ];
@@ -72,12 +113,13 @@ export const appLayoutExtension = createExtension({
 
 /**
  * Frontend module that provides the RHDH app layout with the app headers and
- * the app drawer. Registers the `app/layout` override that accepts header
- * and drawer contributions via inputs.
+ * the app drawer. Registers the `app/rhdh-layout` extension that accepts
+ * header and drawer contributions via inputs, and the `app/layout` override
+ * that hands the Backstage navigation and page content to it.
  *
  * @public
  */
 export const appLayoutModule = createFrontendModule({
   pluginId: 'app',
-  extensions: [appLayoutExtension],
+  extensions: [appLayoutPageExtension, appLayoutExtension],
 });

@@ -28,7 +28,10 @@ describe('AppDrawerContentBlueprint', () => {
     const spec = JSON.parse(JSON.stringify(extension));
 
     expect(spec.kind).toBe('app-drawer-content');
-    expect(spec.attachTo).toEqual({ id: 'app/layout', input: 'drawers' });
+    expect(spec.attachTo).toEqual({
+      id: 'app/rhdh-layout',
+      input: 'drawers',
+    });
   });
 
   it('yields the drawer content and lets app-config override the options', () => {

@@ -28,12 +28,17 @@ import {
   AppHeaderBlueprint,
 } from '@red-hat-developer-hub/backstage-plugin-app-react';
 
-import { appLayoutExtension } from './appLayoutModule';
+import {
+  appLayoutExtension,
+  appLayoutPageDataRef,
+  appLayoutPageExtension,
+} from './appLayoutModule';
 
 // createExtensionTester resolves ids without a plugin namespace, so the
-// subject becomes `layout` instead of `app/layout`.
-const headersInput = { id: 'layout', input: 'headers' } as const;
-const drawersInput = { id: 'layout', input: 'drawers' } as const;
+// subjects become `rhdh-layout` and `layout` instead of `app/rhdh-layout`
+// and `app/layout`.
+const headersInput = { id: 'rhdh-layout', input: 'headers' } as const;
+const drawersInput = { id: 'rhdh-layout', input: 'drawers' } as const;
 
 const navExtension = createExtension({
   name: 'nav',
@@ -49,22 +54,49 @@ const contentExtension = createExtension({
   factory: () => [coreExtensionData.reactElement(<main>Content</main>)],
 });
 
+/** Stands in for `appLayoutPageExtension`, whose id the tester cannot resolve. */
+const pageExtension = createExtension({
+  name: 'page',
+  attachTo: { id: 'rhdh-layout', input: 'page' },
+  output: [appLayoutPageDataRef],
+  factory: () => [
+    appLayoutPageDataRef({
+      nav: <nav>Sidebar</nav>,
+      content: <main>Content</main>,
+    }),
+  ],
+});
+
 const Banner = () => <div>Banner</div>;
 const Toolbar = () => <div>Toolbar</div>;
 
+describe('appLayoutPageExtension', () => {
+  it('keeps the Backstage layout id and forwards nav and content', () => {
+    const spec = JSON.parse(JSON.stringify(appLayoutPageExtension));
+    expect(spec.name).toBe('layout');
+    expect(spec.attachTo).toEqual({ id: 'app/rhdh-layout', input: 'page' });
+
+    const tester = createExtensionTester(appLayoutPageExtension)
+      .add(navExtension)
+      .add(contentExtension);
+    const page = tester.get(appLayoutPageDataRef);
+    expect(page.nav).toEqual(<nav>Sidebar</nav>);
+    expect(page.content).toEqual(<main>Content</main>);
+  });
+});
+
 describe('appLayoutExtension', () => {
-  it('overrides the app layout', () => {
+  it('replaces the app layout', () => {
     const spec = JSON.parse(JSON.stringify(appLayoutExtension));
 
     expect(spec.kind).toBeUndefined();
-    expect(spec.name).toBe('layout');
+    expect(spec.name).toBe('rhdh-layout');
     expect(spec.attachTo).toEqual({ id: 'app/root', input: 'children' });
   });
 
   it('renders headers above the sidebar, content and drawer', async () => {
     const tester = createExtensionTester(appLayoutExtension)
-      .add(navExtension)
-      .add(contentExtension)
+      .add(pageExtension)
       .add(
         AppHeaderBlueprint.make({
           attachTo: headersInput,
@@ -110,9 +142,7 @@ describe('appLayoutExtension', () => {
   });
 
   it('renders without headers and drawers', async () => {
-    const tester = createExtensionTester(appLayoutExtension)
-      .add(navExtension)
-      .add(contentExtension);
+    const tester = createExtensionTester(appLayoutExtension).add(pageExtension);
 
     await renderInTestApp(tester.get(coreExtensionData.reactElement));
 

@@ -47,7 +47,12 @@ export { autoLogoutElement } from './autoLogout/autoLogoutExtension';
 
 export { appDrawerExtension, appDrawerModule } from './drawer/appDrawerModule';
 
-export { appLayoutExtension, appLayoutModule } from './layout/appLayoutModule';
+export {
+  appLayoutExtension,
+  appLayoutModule,
+  appLayoutPageDataRef,
+  appLayoutPageExtension,
+} from './layout/appLayoutModule';
 export { AppLayout } from './layout/AppLayout';
 export type { AppLayoutProps } from './layout/AppLayout';
 export { AppHeaders } from './header/AppHeaders';

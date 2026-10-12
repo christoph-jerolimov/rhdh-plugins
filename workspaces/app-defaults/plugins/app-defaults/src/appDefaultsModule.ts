@@ -23,7 +23,10 @@ import {
 
 import { autoLogoutElement } from './autoLogout/autoLogoutExtension';
 import { commonIconsExtension } from './icons/commonIconsExtension';
-import { appLayoutExtension } from './layout/appLayoutModule';
+import {
+  appLayoutExtension,
+  appLayoutPageExtension,
+} from './layout/appLayoutModule';
 import { appSidebarExtension } from './sidebar/appSidebarModule';
 import { defaultSidebarExtensions } from './sidebar/defaultSidebarExtensions';
 import { appDefaultsTranslations } from './translations';
@@ -42,6 +45,7 @@ import { appDefaultsTranslations } from './translations';
 export const appDefaultsModule = createFrontendModule({
   pluginId: 'app',
   extensions: [
+    appLayoutPageExtension,
     appLayoutExtension,
     appSidebarExtension,
     ...defaultSidebarExtensions,

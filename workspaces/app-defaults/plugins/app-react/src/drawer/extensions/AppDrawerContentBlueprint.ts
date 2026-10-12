@@ -22,7 +22,7 @@ import { appDrawerContentDataRef } from './appDrawerContentDataRef';
 /**
  * Blueprint for plugins to contribute drawer content to the app drawer.
  *
- * Drawers attach to the `drawers` input of the `app/layout` extension
+ * Drawers attach to the `drawers` input of the `app/rhdh-layout` extension
  * provided by `@red-hat-developer-hub/backstage-plugin-app-defaults`, which
  * renders the active drawer next to the sidebar and the page content, below
  * the app headers.
@@ -56,7 +56,7 @@ import { appDrawerContentDataRef } from './appDrawerContentDataRef';
  */
 export const AppDrawerContentBlueprint = createExtensionBlueprint({
   kind: 'app-drawer-content',
-  attachTo: { id: 'app/layout', input: 'drawers' },
+  attachTo: { id: 'app/rhdh-layout', input: 'drawers' },
   output: [appDrawerContentDataRef],
   dataRefs: {
     content: appDrawerContentDataRef,

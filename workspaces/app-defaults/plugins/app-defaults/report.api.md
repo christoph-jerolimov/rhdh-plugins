@@ -62,16 +62,15 @@ export const appDrawerExtension: OverridableExtensionDefinition<{
   configInput: {};
   output: ExtensionDataRef<JSX_2.Element, 'core.reactElement', {}>;
   inputs: {
-    nav: ExtensionInput<
-      ConfigurableExtensionDataRef<JSX_2.Element, 'core.reactElement', {}>,
-      {
-        singleton: true;
-        optional: false;
-        internal: false;
-      }
-    >;
-    content: ExtensionInput<
-      ConfigurableExtensionDataRef<JSX_2.Element, 'core.reactElement', {}>,
+    page: ExtensionInput<
+      ConfigurableExtensionDataRef<
+        {
+          nav: JSX.Element;
+          content: JSX.Element;
+        },
+        'rhdh.app.layout.page',
+        {}
+      >,
       {
         singleton: true;
         optional: false;
@@ -97,7 +96,7 @@ export const appDrawerExtension: OverridableExtensionDefinition<{
   };
   params: never;
   kind: undefined;
-  name: 'layout';
+  name: 'rhdh-layout';
 }>;
 
 // @public @deprecated
@@ -120,16 +119,15 @@ export const appLayoutExtension: OverridableExtensionDefinition<{
   configInput: {};
   output: ExtensionDataRef<JSX_2.Element, 'core.reactElement', {}>;
   inputs: {
-    nav: ExtensionInput<
-      ConfigurableExtensionDataRef<JSX_2.Element, 'core.reactElement', {}>,
-      {
-        singleton: true;
-        optional: false;
-        internal: false;
-      }
-    >;
-    content: ExtensionInput<
-      ConfigurableExtensionDataRef<JSX_2.Element, 'core.reactElement', {}>,
+    page: ExtensionInput<
+      ConfigurableExtensionDataRef<
+        {
+          nav: JSX.Element;
+          content: JSX.Element;
+        },
+        'rhdh.app.layout.page',
+        {}
+      >,
       {
         singleton: true;
         optional: false;
@@ -155,11 +153,56 @@ export const appLayoutExtension: OverridableExtensionDefinition<{
   };
   params: never;
   kind: undefined;
-  name: 'layout';
+  name: 'rhdh-layout';
 }>;
 
 // @public
 export const appLayoutModule: FrontendModule;
+
+// @public
+export const appLayoutPageDataRef: ConfigurableExtensionDataRef<
+  {
+    nav: JSX.Element;
+    content: JSX.Element;
+  },
+  'rhdh.app.layout.page',
+  {}
+>;
+
+// @public
+export const appLayoutPageExtension: OverridableExtensionDefinition<{
+  config: {};
+  configInput: {};
+  output: ExtensionDataRef<
+    {
+      nav: JSX.Element;
+      content: JSX.Element;
+    },
+    'rhdh.app.layout.page',
+    {}
+  >;
+  inputs: {
+    nav: ExtensionInput<
+      ConfigurableExtensionDataRef<JSX_2.Element, 'core.reactElement', {}>,
+      {
+        singleton: true;
+        optional: false;
+        internal: false;
+      }
+    >;
+    content: ExtensionInput<
+      ConfigurableExtensionDataRef<JSX_2.Element, 'core.reactElement', {}>,
+      {
+        singleton: true;
+        optional: false;
+        internal: false;
+      }
+    >;
+  };
+  params: never;
+  kind: undefined;
+  name: 'layout';
+}>;
 
 // @public
 export interface AppLayoutProps {

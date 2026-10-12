@@ -31,7 +31,10 @@ describe('AppHeaderBlueprint', () => {
 
     expect(spec.kind).toBe('app-header');
     expect(spec.name).toBe('announcement');
-    expect(spec.attachTo).toEqual({ id: 'app/layout', input: 'headers' });
+    expect(spec.attachTo).toEqual({
+      id: 'app/rhdh-layout',
+      input: 'headers',
+    });
   });
 
   it('yields the header data with the extension id', () => {
