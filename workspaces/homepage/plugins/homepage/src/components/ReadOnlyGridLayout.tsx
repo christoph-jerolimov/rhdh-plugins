@@ -38,7 +38,6 @@ import 'react-grid-layout/css/styles.css';
 
 import useMeasure from 'react-use/lib/useMeasure';
 import { HomePageCardConfig } from '../types';
-import { isCardADefaultConfiguration } from '../utils/nfsLayout';
 import {
   GRID_GAP,
   readOnlyGridProps,
@@ -84,27 +83,25 @@ export const ReadOnlyGridLayout = ({
   const [measureRef, measureRect] = useMeasure<HTMLDivElement>();
 
   const cards = useMemo<Card[]>(() => {
-    return homepageCards
-      .filter(isCardADefaultConfiguration)
-      .map<Card>((cardData, index) => {
-        const id = (index + 1).toString();
-        const layouts = buildCardLayouts(id, cardData.breakpointLayouts);
+    return homepageCards.map<Card>((cardData, index) => {
+      const id = (index + 1).toString();
+      const layouts = buildCardLayouts(id, cardData.breakpointLayouts);
 
-        const component = cardData.component;
-        const RenderContent =
-          typeof component === 'object' &&
-          component !== null &&
-          'Content' in component
-            ? (component as { Content: ComponentType<any> }).Content
-            : component;
+      const component = cardData.component;
+      const RenderContent =
+        typeof component === 'object' &&
+        component !== null &&
+        'Content' in component
+          ? (component as { Content: ComponentType<any> }).Content
+          : component;
 
-        return {
-          id,
-          Component: RenderContent,
-          layouts,
-          props: cardData.props,
-        };
-      });
+      return {
+        id,
+        Component: RenderContent,
+        layouts,
+        props: cardData.props,
+      };
+    });
   }, [homepageCards]);
 
   const layouts = useMemo(() => aggregateLayouts(cards), [cards]);

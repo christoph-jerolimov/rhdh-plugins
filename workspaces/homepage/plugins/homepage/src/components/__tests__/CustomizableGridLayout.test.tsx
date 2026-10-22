@@ -96,4 +96,39 @@ describe('CustomizableGridLayout', () => {
     expect(screen.getByTestId('search-card')).toBeInTheDocument();
     expect(screen.getByText('Without node')).toBeInTheDocument();
   });
+
+  it('builds grid config from defaultCards while all homepageCards stay available', () => {
+    render(
+      <ThemeProvider theme={createTheme()}>
+        <CustomizableGridLayout
+          homepageCards={homepageCards}
+          defaultCards={[homepageCards[1], homepageCards[1]]}
+        />
+      </ThemeProvider>,
+    );
+
+    const grid = screen.getByTestId('custom-homepage-grid');
+    expect(grid).toHaveAttribute('data-config-length', '2');
+    expect(grid).toHaveAttribute('data-first-width', '12');
+    expect(grid).toHaveAttribute('data-first-height', '4');
+    expect(screen.getByTestId('headline-card')).toBeInTheDocument();
+    expect(screen.getByTestId('search-card')).toBeInTheDocument();
+  });
+
+  it('renders an empty grid config when there are no defaultCards', () => {
+    render(
+      <ThemeProvider theme={createTheme()}>
+        <CustomizableGridLayout
+          homepageCards={homepageCards}
+          defaultCards={[]}
+        />
+      </ThemeProvider>,
+    );
+
+    expect(screen.getByTestId('custom-homepage-grid')).toHaveAttribute(
+      'data-config-length',
+      '0',
+    );
+    expect(screen.getByTestId('headline-card')).toBeInTheDocument();
+  });
 });

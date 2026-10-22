@@ -38,8 +38,13 @@ jest.mock('../Header', () => ({
 jest.mock('../CustomizableGridLayout', () => ({
   CustomizableGridLayout: ({
     homepageCards,
+    defaultCards,
   }: {
     homepageCards: {
+      name?: string;
+      breakpointLayouts?: { xl?: { h?: number } };
+    }[];
+    defaultCards: {
       name?: string;
       breakpointLayouts?: { xl?: { h?: number } };
     }[];
@@ -47,7 +52,11 @@ jest.mock('../CustomizableGridLayout', () => ({
     <div
       data-testid="customizable-grid"
       data-card-names={homepageCards.map(card => card.name).join(',')}
+      data-default-card-names={defaultCards.map(card => card.name).join(',')}
       data-first-xl-h={String(homepageCards[0]?.breakpointLayouts?.xl?.h ?? '')}
+      data-first-default-xl-h={String(
+        defaultCards[0]?.breakpointLayouts?.xl?.h ?? '',
+      )}
     />
   ),
 }));
@@ -153,19 +162,57 @@ describe('HomePageLayout', () => {
     expect(screen.queryByTestId('customizable-grid')).not.toBeInTheDocument();
   });
 
-  it('filters widgets by defaultWidgets refs', () => {
+  it('filters read-only widgets by defaultWidgets refs', () => {
     mockUseDefaultWidgets.mockReturnValue({
       defaultWidgets: [{ id: 'qa', ref: 'quickaccess-card' }],
       loading: false,
       error: undefined,
     });
 
-    renderLayout(true);
+    renderLayout(false);
 
-    expect(screen.getByTestId('customizable-grid')).toHaveAttribute(
+    expect(screen.getByTestId('read-only-grid')).toHaveAttribute(
       'data-card-names',
       'quickaccess-card',
     );
+  });
+
+  it('keeps all widgets available on the customizable grid and uses defaultWidgets as default layout', () => {
+    mockUseDefaultWidgets.mockReturnValue({
+      defaultWidgets: [
+        { id: 'qa', ref: 'quickaccess-card', layout: { xl: { w: 6, h: 8 } } },
+      ],
+      loading: false,
+      error: undefined,
+    });
+
+    renderLayout(true);
+
+    const grid = screen.getByTestId('customizable-grid');
+    expect(grid).toHaveAttribute(
+      'data-card-names',
+      'quickaccess-card,rhdh-entity-section',
+    );
+    expect(grid).toHaveAttribute('data-default-card-names', 'quickaccess-card');
+    expect(grid).toHaveAttribute('data-first-default-xl-h', '8');
+  });
+
+  it('renders the customizable grid without defaults when defaultWidgets filters out all widgets', () => {
+    mockUseDefaultWidgets.mockReturnValue({
+      defaultWidgets: [],
+      loading: false,
+      error: undefined,
+    });
+
+    renderLayout(true);
+
+    const grid = screen.getByTestId('customizable-grid');
+    expect(grid).toHaveAttribute(
+      'data-card-names',
+      'quickaccess-card,rhdh-entity-section',
+    );
+    expect(grid).toHaveAttribute('data-default-card-names', '');
+    expect(screen.queryByTestId('empty-state')).not.toBeInTheDocument();
   });
 
   it('shows empty state when defaultWidgets filters out all widgets', () => {

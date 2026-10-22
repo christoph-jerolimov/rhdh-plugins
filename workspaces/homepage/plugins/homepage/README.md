@@ -52,6 +52,8 @@ app:
             ...
 ```
 
+On a customizable homepage (`customizable: true`, the default), the visible `homepage.defaultWidgets` form the default layout only. Every installed `home-page-widget` attached to `page:homepage` stays available in the "Add widget" dialog, whether or not it is listed in `homepage.defaultWidgets`. On a read-only homepage only the visible default widgets are rendered.
+
 On a read-only homepage (`customizable: false`), `props` from `widgetLayout` is forwarded into the widget. Each widget reads the fields it understands.
 
 The key is the widget `name`, or the extension id (the last segment of `home-page-widget:<plugin>/<id>`).
