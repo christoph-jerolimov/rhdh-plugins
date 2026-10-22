@@ -52,6 +52,11 @@ export interface HomePageProps extends HeaderProps {
  *
  * When `homepage.defaultWidgets` is available from the backend, applies the same
  * persona / RBAC filtering as the legacy homepage (`if` / `unless` / `tags`).
+ *
+ * On a read-only homepage only the visible default widgets are rendered.
+ * On a customizable homepage the visible default widgets form the default
+ * layout, while every installed widget stays available in the "Add widget"
+ * dialog.
  */
 export const HomePageLayout = ({
   widgets,
@@ -73,13 +78,26 @@ export const HomePageLayout = ({
     return applyReadOnlyWidgetLayout(filtered, widgetLayout);
   }, [widgets, defaultWidgets, customizable, widgetLayout]);
 
+  const availableWidgets = useMemo(
+    () => applyWidgetLayoutBreakpoints(widgets, widgetLayout),
+    [widgets, widgetLayout],
+  );
+
   let content: React.ReactNode;
   if (loading) {
     content = <Progress />;
+  } else if (customizable) {
+    content =
+      availableWidgets.length === 0 ? (
+        <EmptyState title={t('homePage.empty')} missing="content" />
+      ) : (
+        <CustomizableGridLayout
+          homepageCards={availableWidgets}
+          defaultCards={visibleWidgets}
+        />
+      );
   } else if (visibleWidgets.length === 0) {
     content = <EmptyState title={t('homePage.empty')} missing="content" />;
-  } else if (customizable) {
-    content = <CustomizableGridLayout homepageCards={visibleWidgets} />;
   } else {
     content = <ReadOnlyGridLayout homepageCards={visibleWidgets} />;
   }

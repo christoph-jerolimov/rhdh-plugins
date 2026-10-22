@@ -34,13 +34,24 @@ import { HomePageCardConfig } from '../types';
 import { useContainerQuery } from '../hooks/useContainerQuery';
 
 import 'react-grid-layout/css/styles.css';
-import { isCardADefaultConfiguration } from '../utils/nfsLayout';
 
 /**
  * Props for the customizable grid layout.
  */
 export interface CustomizableGridLayoutProps {
+  /**
+   * All widgets a user can place on the homepage. These are offered in the
+   * "Add widget" dialog of the grid.
+   */
   homepageCards: HomePageCardConfig[];
+  /**
+   * Widgets that make up the default layout (shown until the user customizes
+   * the page, and restored via "Restore defaults"). One entry per card to
+   * place; the same widget may appear more than once.
+   *
+   * Defaults to `homepageCards`.
+   */
+  defaultCards?: HomePageCardConfig[];
 }
 
 /**
@@ -49,6 +60,7 @@ export interface CustomizableGridLayoutProps {
  */
 export const CustomizableGridLayout = ({
   homepageCards,
+  defaultCards = homepageCards,
 }: CustomizableGridLayoutProps) => {
   const theme = useTheme();
   const gridContainerRef = useRef<HTMLDivElement>(null);
@@ -57,29 +69,27 @@ export const CustomizableGridLayout = ({
   const config = useMemo(() => {
     const defaultConfig: LayoutConfiguration[] = [];
 
-    homepageCards.forEach(homepageCard => {
+    defaultCards.forEach(homepageCard => {
       if (!homepageCard.node) {
         return;
       }
 
-      if (isCardADefaultConfiguration(homepageCard)) {
-        const layout = homepageCard.breakpointLayouts?.xl || {};
+      const layout = homepageCard.breakpointLayouts?.xl || {};
 
-        defaultConfig.push({
-          component: homepageCard.component,
-          x: layout.x ?? 0,
-          y: layout.y ?? 0,
-          width: layout.w ?? 12,
-          height: layout.h ?? 4,
-          movable: true,
-          deletable: true,
-          resizable: true,
-        });
-      }
+      defaultConfig.push({
+        component: homepageCard.component,
+        x: layout.x ?? 0,
+        y: layout.y ?? 0,
+        width: layout.w ?? 12,
+        height: layout.h ?? 4,
+        movable: true,
+        deletable: true,
+        resizable: true,
+      });
     });
 
     return defaultConfig;
-  }, [homepageCards]);
+  }, [defaultCards]);
 
   return (
     <>
