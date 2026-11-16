@@ -20,7 +20,8 @@ import { CustomScaffolderPage } from './CustomScaffolderPage';
 
 /**
  * Override of the Backstage scaffolder plugin that adds an empty state
- * when no templates are available.
+ * when no templates are available and opts the template wizard form into
+ * the Backstage UI (BUI) theme instead of the legacy MUI theme.
  *
  * @public
  */
@@ -28,8 +29,12 @@ export const scaffolderPluginOverride: typeof scaffolderPlugin =
   scaffolderPlugin.withOverrides({
     extensions: [
       scaffolderPlugin.getExtension('sub-page:scaffolder/templates').override({
-        factory(originalFactory) {
-          const original = originalFactory();
+        factory(originalFactory, { config }) {
+          const original = originalFactory({
+            // Render the scaffolder form with Backstage UI components.
+            // The upstream default is still the MUI form.
+            config: { ...config, enableBackstageUi: true },
+          });
           const originalElement = original.get(coreExtensionData.reactElement);
           return [
             ...original,
